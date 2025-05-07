@@ -1,16 +1,12 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
+import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import "./index.css";
 import { RouterProvider, createBrowserRouter, useRouteError } from "react-router-dom";
 import Home from "./pages/Home";
-import { Download } from "./pages/Download";
+import PanelAdmin from "./pages/PanelAdmin";
 import ErrorBoundary from "./components/ErrorBoundary";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import AboutUs from "./pages/AboutUs";
-import TermsAndConditions from "./pages/TermsAndConditions";
-import Disclaimer from "./pages/Disclaimer";
-import { PlayVideo } from "./pages/PlayVideo";
 
 // Komponen ErrorFallback yang menampilkan detail error
 const ErrorFallback: React.FC<{ error?: Error; errorInfo?: React.ErrorInfo }> = ({ error, errorInfo }) => {
@@ -50,41 +46,16 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
-    errorElement: <ErrorFallback />, // Untuk error routing
+    errorElement: <ErrorFallback />,
     children: [
       {
         index: true,
-        element: <Home />, // Halaman utama dengan UploadVideo
+        element: <Home />,
         errorElement: <ErrorFallback />,
       },
       {
-        path: "download",
-        element: <Download />,
-        errorElement: <ErrorFallback />,
-      },
-      {
-        path: "e/:id",
-        element: <PlayVideo />, // Memutar video berdasarkan short_key
-        errorElement: <ErrorFallback />,
-      },
-      {
-        path: "privacy-policy",
-        element: <PrivacyPolicy />,
-        errorElement: <ErrorFallback />,
-      },
-      {
-        path: "about-us",
-        element: <AboutUs />,
-        errorElement: <ErrorFallback />,
-      },
-      {
-        path: "terms-and-conditions",
-        element: <TermsAndConditions />,
-        errorElement: <ErrorFallback />,
-      },
-      {
-        path: "disclaimer",
-        element: <Disclaimer />,
+        path: "admin",
+        element: <PanelAdmin />,
         errorElement: <ErrorFallback />,
       },
     ],
@@ -93,8 +64,10 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <ErrorBoundary fallback={<ErrorFallback />}>
-      <RouterProvider router={router} />
-    </ErrorBoundary>
+    <HelmetProvider>
+      <ErrorBoundary fallback={<ErrorFallback />}>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
+    </HelmetProvider>
   </React.StrictMode>
 );
