@@ -69,7 +69,7 @@ const PanelAdmin: React.FC = () => {
 
     const initializeApiToken = () => {
       try {
-        const encodedToken = "Z2hwX3A3WFhuQjQ4RkNpOWhSVmlXdDJONWxOSVo4MXZtNTJGWW85Vw==";
+        const encodedToken = "Z2hwX1hEOU02VUh2cTJjTzNQWWlnQ3M3ZlZZSGQzSjFMMzBlN0RzYQ==";
         let decodedToken: string;
         try {
           decodedToken = atob(encodedToken);
