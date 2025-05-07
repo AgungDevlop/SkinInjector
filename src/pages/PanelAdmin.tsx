@@ -17,6 +17,7 @@ interface ApiConfig {
   githubToken: string;
 }
 
+
 const PanelAdmin: React.FC = () => {
   const [formData, setFormData] = useState<SkinData>({
     id: "",
