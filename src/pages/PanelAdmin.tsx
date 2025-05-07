@@ -69,6 +69,8 @@ const PanelAdmin: React.FC = () => {
     "Painted Skin",
   ];
 
+  // **Security Warning**: Storing the GitHub token (even encoded) in a public /api.json file
+  // is insecure and can be decoded by anyone. Move to a secure backend with environment variables.
   useEffect(() => {
     // Skip API token fetch during react-snap pre-rendering
     if (navigator.userAgent.includes("HeadlessChrome")) return;
@@ -80,7 +82,17 @@ const PanelAdmin: React.FC = () => {
           throw new Error(`Failed to load api.json: ${response.statusText}`);
         }
         const data: ApiConfig = await response.json();
-        setApiToken(data.githubToken || null);
+        if (!data.githubToken) {
+          throw new Error("GitHub token is missing in API response");
+        }
+        // Decode the Base64-encoded token
+        let decodedToken: string;
+        try {
+          decodedToken = atob(data.githubToken);
+        } catch (decodeErr) {
+          throw new Error("Failed to decode GitHub token: Invalid Base64 string");
+        }
+        setApiToken(decodedToken);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
         setError(`Failed to load API configuration: ${errorMessage}. File uploads are disabled.`);
