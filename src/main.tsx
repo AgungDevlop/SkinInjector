@@ -22,17 +22,17 @@ const ErrorFallback = (
 
 const router = createBrowserRouter([
   {
-    path: "/SkinInjector/", 
+    path: "/SkinInjector/",
     element: <App />,
     errorElement: ErrorFallback,
     children: [
       {
         index: true,
         element: <Home />,
-        errorElement: ErrorFallback, 
+        errorElement: ErrorFallback,
       },
       {
-        path: "admin",
+        path: "PanelUpload",
         element: <PanelAdmin />,
         errorElement: ErrorFallback,
       },
@@ -42,8 +42,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-      <ErrorBoundary fallback={ErrorFallback}>
-        <RouterProvider router={router} />
-      </ErrorBoundary>
+    <ErrorBoundary fallback={ErrorFallback}>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
   </React.StrictMode>
 );

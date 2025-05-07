@@ -1,7 +1,6 @@
 import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import axios, { AxiosError } from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { Helmet } from "react-helmet-async";
 
 interface SkinData {
   id: string;
@@ -321,39 +320,6 @@ const PanelAdmin: React.FC = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Skin Tools ML - Admin Panel</title>
-        <meta
-          name="description"
-          content="Admin panel for Skin Tools ML to add new Mobile Legends skins, including hero details, images, and zip files."
-        />
-        <meta
-          name="keywords"
-          content="Skin Tools ML, Mobile Legends, admin panel, add skins, MLBB"
-        />
-        <meta name="robots" content="noindex, nofollow" />
-        <meta property="og:title" content="Skin Tools ML - Admin Panel" />
-        <meta
-          property="og:description"
-          content="Manage and add new Mobile Legends skins through the Skin Tools ML admin panel."
-        />
-        <meta
-          property="og:image"
-          content="https://images.dwncdn.net/images/t_app-icon-l/p/99017561-4e15-42b5-9538-a6f4b1f0f1eb/259597479/skin-tools-ml-oti-logo"
-        />
-        <meta property="og:url" content="https://agungdevlop.github.io/InjectorMl/admin" />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Skin Tools ML - Admin Panel" />
-        <meta
-          name="twitter:description"
-          content="Manage and add new Mobile Legends skins through the Skin Tools ML admin panel."
-        />
-        <meta
-          name="twitter:image"
-          content="https://images.dwncdn.net/images/t_app-icon-l/p/99017561-4e15-42b5-9538-a6f4b1f0f1eb/259597479/skin-tools-ml-oti-logo"
-        />
-      </Helmet>
       <div className="max-w-3xl mx-auto p-8 bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl shadow-2xl relative overflow-hidden">
         <div className="absolute inset-0 border-2 border-blue-400 opacity-20 rounded-2xl animate-pulse-slow pointer-events-none"></div>
         <h1 className="text-3xl font-extrabold text-blue-100 mb-8 tracking-tighter relative z-10">
