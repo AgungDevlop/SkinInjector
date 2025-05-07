@@ -13,11 +13,6 @@ interface SkinData {
   url: string;
 }
 
-interface ApiConfig {
-  githubToken: string;
-}
-
-
 const PanelAdmin: React.FC = () => {
   const [formData, setFormData] = useState<SkinData>({
     id: "",
@@ -69,38 +64,28 @@ const PanelAdmin: React.FC = () => {
     "Painted Skin",
   ];
 
-  // **Security Warning**: Storing the GitHub token (even encoded) in a public /api.json file
-  // is insecure and can be decoded by anyone. Move to a secure backend with environment variables.
   useEffect(() => {
-    // Skip API token fetch during react-snap pre-rendering
     if (navigator.userAgent.includes("HeadlessChrome")) return;
 
-    const fetchApiToken = async () => {
+    const initializeApiToken = () => {
       try {
-        const response = await fetch("/api.json");
-        if (!response.ok) {
-          throw new Error(`Failed to load api.json: ${response.statusText}`);
-        }
-        const data: ApiConfig = await response.json();
-        if (!data.githubToken) {
-          throw new Error("GitHub token is missing in API response");
-        }
-        // Decode the Base64-encoded token
+        const encodedToken = "Z2hwX3A3WFhuQjQ4RkNpOWhSVmlXdDJONWxOSVo4MXZtNTJGWW85Vw==";
         let decodedToken: string;
         try {
-          decodedToken = atob(data.githubToken);
+          decodedToken = atob(encodedToken);
         } catch (decodeErr) {
-          throw new Error("Failed to decode GitHub token: Invalid Base64 string");
+          throw new Error("Failed to decode ");
         }
         setApiToken(decodedToken);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
-        setError(`Failed to load API configuration: ${errorMessage}. File uploads are disabled.`);
+        setError(`Failed to initialize API token: ${errorMessage}. File uploads are disabled.`);
         setApiToken(null);
       }
     };
-    fetchApiToken();
+    initializeApiToken();
   }, []);
+
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -146,8 +131,9 @@ const PanelAdmin: React.FC = () => {
       return;
     }
 
+
     if (!apiToken) {
-      setError("GitHub API token is missing. File uploads are disabled.");
+      setError("SFile uploads are disabled.");
       return;
     }
 
@@ -179,6 +165,8 @@ const PanelAdmin: React.FC = () => {
       const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${folder}/${newFileName}`;
 
       try {
+        console.log("Uploading to:", uploadUrl); 
+        console.log("Authorization Header:", `Bearer ${apiToken}`);
         const response = await axios.put(
           uploadUrl,
           {
@@ -208,7 +196,12 @@ const PanelAdmin: React.FC = () => {
         setError("");
       } catch (err) {
         const errorMessage =
-          err instanceof AxiosError ? err.message : "Unknown error";
+          err instanceof AxiosError
+            ? `${err.message} (Status: ${err.response?.status}, Data: ${JSON.stringify(
+                err.response?.data
+              )})`
+            : "Unknown error";
+        console.error("Upload Error:", err); 
         setError(
           `Failed to upload ${
             type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"
@@ -242,12 +235,12 @@ const PanelAdmin: React.FC = () => {
     }
 
     if (!apiToken) {
-      setError("GitHub API token is missing. Skin submission is disabled.");
+      setError("Skin submission is disabled.");
       setIsSubmitting(false);
       return;
     }
 
-    const { id, ...formDataWithoutId } = formData; // Exclude id from formData
+    const { id, ...formDataWithoutId } = formData;
     const newSkin: SkinData = {
       id: uuidv4().slice(0, 10),
       ...formDataWithoutId,
@@ -312,7 +305,11 @@ const PanelAdmin: React.FC = () => {
       setSuccess("Skin added successfully!");
     } catch (err) {
       const errorMessage =
-        err instanceof AxiosError ? err.message : "Unknown error";
+        err instanceof AxiosError
+          ? `${err.message} (Status: ${err.response?.status}, Data: ${JSON.stringify(
+              err.response?.data
+            )})`
+          : "Unknown error";
       setError(`Failed to update Skin.json: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
@@ -320,242 +317,240 @@ const PanelAdmin: React.FC = () => {
   };
 
   return (
-    <>
-      <div className="max-w-3xl mx-auto p-8 bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl shadow-2xl relative overflow-hidden">
-        <div className="absolute inset-0 border-2 border-blue-400 opacity-20 rounded-2xl animate-pulse-slow pointer-events-none"></div>
-        <h1 className="text-3xl font-extrabold text-blue-100 mb-8 tracking-tighter relative z-10">
-          Add New Skin
-        </h1>
-        {error && (
-          <div className="mb-6 p-4 bg-red-900/80 text-red-100 rounded-lg text-sm backdrop-blur-sm relative z-10">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="mb-6 p-4 bg-blue-900/80 text-blue-100 rounded-lg text-sm backdrop-blur-sm relative z-10">
-            {success}
-          </div>
-        )}
-        <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-          <div>
-            <label
-              className="block text-sm font-medium text-blue-200 mb-2"
-              htmlFor="hero"
-            >
-              Hero Name
-            </label>
-            <input
-              id="hero"
-              type="text"
-              name="hero"
-              value={formData.hero}
-              onChange={handleInputChange}
-              className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
-              required
-              disabled={isSubmitting}
-            />
-          </div>
+    <div className="max-w-3xl mx-auto p-8 bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl shadow-2xl relative overflow-hidden">
+      <div className="absolute inset-0 border-2 border-blue-400 opacity-20 rounded-2xl animate-pulse-slow pointer-events-none"></div>
+      <h1 className="text-3xl font-extrabold text-blue-100 mb-8 tracking-tighter relative z-10">
+        Add New Skin
+      </h1>
+      {error && (
+        <div className="mb-6 p-4 bg-red-900/80 text-red-100 rounded-lg text-sm backdrop-blur-sm relative z-10">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="mb-6 p-4 bg-blue-900/80 text-blue-100 rounded-lg text-sm backdrop-blur-sm relative z-10">
+          {success}
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+        <div>
+          <label
+            className="block text-sm font-medium text-blue-200 mb-2"
+            htmlFor="hero"
+          >
+            Hero Name
+          </label>
+          <input
+            id="hero"
+            type="text"
+            name="hero"
+            value={formData.hero}
+            onChange={handleInputChange}
+            className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
 
-          <div>
-            <label
-              className="block text-sm font-medium text-blue-200 mb-2"
-              htmlFor="name"
-            >
-              Skin Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
-              required
-              disabled={isSubmitting}
-            />
-          </div>
+        <div>
+          <label
+            className="block text-sm font-medium text-blue-200 mb-2"
+            htmlFor="name"
+          >
+            Skin Name
+          </label>
+          <input
+            id="name"
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
 
-          <div>
-            <label
-              className="block text-sm font-medium text-blue-200 mb-2"
-              htmlFor="type"
-            >
-              Type
-            </label>
-            <select
-              id="type"
-              name="type"
-              value={formData.type}
-              onChange={handleInputChange}
-              className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
-              disabled={isSubmitting}
-            >
-              {typeOptions.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              className="block text-sm font-medium text-blue-200 mb-2"
-              htmlFor="squad"
-            >
-              Squad
-            </label>
-            <select
-              id="squad"
-              name="squad"
-              value={formData.squad}
-              onChange={handleInputChange}
-              className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
-              required
-              disabled={isSubmitting}
-            >
-              <option value="">Select Squad</option>
-              {squadOptions.map((squad) => (
-                <option key={squad} value={squad}>
-                  {squad}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              className="block text-sm font-medium text-blue-200 mb-2"
-              htmlFor="img1"
-            >
-              Image 1
-            </label>
-            <input
-              id="img1"
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileChange(e, "img1")}
-              className="block w-full text-blue-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-blue-100 hover:file:bg-blue-600 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
-              disabled={isSubmitting}
-            />
-            <p className="text-xs text-blue-300 mt-1">
-              Accepted formats: jpg, jpeg, png, gif. Max size: 100MB
-            </p>
-            {img1File && (
-              <p className="mt-2 text-sm text-blue-300 truncate">
-                Selected: {img1File.name}
-              </p>
-            )}
-            {uploadProgress.img1 > 0 && (
-              <div className="mt-4">
-                <div className="w-full bg-blue-800/50 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-blue-400 h-2.5 rounded-full transition-all duration-300"
-                    style={{ width: `${uploadProgress.img1}%` }}
-                  ></div>
-                </div>
-                <p className="text-sm text-blue-300 mt-1">{uploadProgress.img1}%</p>
-              </div>
-            )}
-            {formData.img1 && (
-              <p className="mt-2 text-sm text-blue-300 truncate">
-                Uploaded: {formData.img1}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label
-              className="block text-sm font-medium text-blue-200 mb-2"
-              htmlFor="img2"
-            >
-              Image 2
-            </label>
-            <input
-              id="img2"
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileChange(e, "img2")}
-              className="block w-full text-blue-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-blue-100 hover:file:bg-blue-600 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
-              disabled={isSubmitting}
-            />
-            <p className="text-xs text-blue-300 mt-1">
-              Accepted formats: jpg, jpeg, png, gif. Max size: 100MB
-            </p>
-            {img2File && (
-              <p className="mt-2 text-sm text-blue-300 truncate">
-                Selected: {img2File.name}
-              </p>
-            )}
-            {uploadProgress.img2 > 0 && (
-              <div className="mt-4">
-                <div className="w-full bg-blue-800/50 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-blue-400 h-2.5 rounded-full transition-all duration-300"
-                    style={{ width: `${uploadProgress.img2}%` }}
-                  ></div>
-                </div>
-                <p className="text-sm text-blue-300 mt-1">{uploadProgress.img2}%</p>
-              </div>
-            )}
-            {formData.img2 && (
-              <p className="mt-2 text-sm text-blue-300 truncate">
-                Uploaded: {formData.img2}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label
-              className="block text-sm font-medium text-blue-200 mb-2"
-              htmlFor="zip"
-            >
-              Zip File
-            </label>
-            <input
-              id="zip"
-              type="file"
-              accept=".zip"
-              onChange={(e) => handleFileChange(e, "zip")}
-              className="block w-full text-blue-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-blue-100 hover:file:bg-blue-600 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
-              disabled={isSubmitting}
-            />
-            <p className="text-xs text-blue-300 mt-1">
-              Accepted format: zip. Max size: 100MB
-            </p>
-            {zipFile && (
-              <p className="mt-2 text-sm text-blue-300 truncate">
-                Selected: {zipFile.name}
-              </p>
-            )}
-            {uploadProgress.zip > 0 && (
-              <div className="mt-4">
-                <div className="w-full bg-blue-800/50 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-blue-400 h-2.5 rounded-full transition-all duration-300"
-                    style={{ width: `${uploadProgress.zip}%` }}
-                  ></div>
-                </div>
-                <p className="text-sm text-blue-300 mt-1">{uploadProgress.zip}%</p>
-              </div>
-            )}
-            {formData.url && (
-              <p className="mt-2 text-sm text-blue-300 truncate">
-                Uploaded: {formData.url}
-              </p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-700 text-blue-100 py-3 px-4 rounded-xl font-semibold hover:bg-blue-600 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        <div>
+          <label
+            className="block text-sm font-medium text-blue-200 mb-2"
+            htmlFor="type"
+          >
+            Type
+          </label>
+          <select
+            id="type"
+            name="type"
+            value={formData.type}
+            onChange={handleInputChange}
+            className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Submitting..." : "Add Skin"}
-          </button>
-        </form>
-      </div>
-    </>
+            {typeOptions.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            className="block text-sm font-medium text-blue-200 mb-2"
+            htmlFor="squad"
+          >
+            Squad
+          </label>
+          <select
+            id="squad"
+            name="squad"
+            value={formData.squad}
+            onChange={handleInputChange}
+            className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+            required
+            disabled={isSubmitting}
+          >
+            <option value="">Select Squad</option>
+            {squadOptions.map((squad) => (
+              <option key={squad} value={squad}>
+                {squad}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            className="block text-sm font-medium text-blue-200 mb-2"
+            htmlFor="img1"
+          >
+            Image 1
+          </label>
+          <input
+            id="img1"
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleFileChange(e, "img1")}
+            className="block w-full text-blue-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-blue-100 hover:file:bg-blue-600 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
+            disabled={isSubmitting}
+          />
+          <p className="text-xs text-blue-300 mt-1">
+            Accepted formats: jpg, jpeg, png, gif. Max size: 100MB
+          </p>
+          {img1File && (
+            <p className="mt-2 text-sm text-blue-300 truncate">
+              Selected: {img1File.name}
+            </p>
+          )}
+          {uploadProgress.img1 > 0 && (
+            <div className="mt-4">
+              <div className="w-full bg-blue-800/50 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-blue-400 h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress.img1}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-blue-300 mt-1">{uploadProgress.img1}%</p>
+            </div>
+          )}
+          {formData.img1 && (
+            <p className="mt-2 text-sm text-blue-300 truncate">
+              Uploaded: {formData.img1}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label
+            className="block text-sm font-medium text-blue-200 mb-2"
+            htmlFor="img2"
+          >
+            Image 2
+          </label>
+          <input
+            id="img2"
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleFileChange(e, "img2")}
+            className="block w-full text-blue-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-blue-100 hover:file:bg-blue-600 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
+            disabled={isSubmitting}
+          />
+          <p className="text-xs text-blue-300 mt-1">
+            Accepted formats: jpg, jpeg, png, gif. Max size: 100MB
+          </p>
+          {img2File && (
+            <p className="mt-2 text-sm text-blue-300 truncate">
+              Selected: {img2File.name}
+            </p>
+          )}
+          {uploadProgress.img2 > 0 && (
+            <div className="mt-4">
+              <div className="w-full bg-blue-800/50 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-blue-400 h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress.img2}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-blue-300 mt-1">{uploadProgress.img2}%</p>
+            </div>
+          )}
+          {formData.img2 && (
+            <p className="mt-2 text-sm text-blue-300 truncate">
+              Uploaded: {formData.img2}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label
+            className="block text-sm font-medium text-blue-200 mb-2"
+            htmlFor="zip"
+          >
+            Zip File
+          </label>
+          <input
+            id="zip"
+            type="file"
+            accept=".zip"
+            onChange={(e) => handleFileChange(e, "zip")}
+            className="block w-full text-blue-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-blue-100 hover:file:bg-blue-600 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
+            disabled={isSubmitting}
+          />
+          <p className="text-xs text-blue-300 mt-1">
+            Accepted format: zip. Max size: 100MB
+          </p>
+          {zipFile && (
+            <p className="mt-2 text-sm text-blue-300 truncate">
+              Selected: {zipFile.name}
+            </p>
+          )}
+          {uploadProgress.zip > 0 && (
+            <div className="mt-4">
+              <div className="w-full bg-blue-800/50 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-blue-400 h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress.zip}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-blue-300 mt-1">{uploadProgress.zip}%</p>
+            </div>
+          )}
+          {formData.url && (
+            <p className="mt-2 text-sm text-blue-300 truncate">
+              Uploaded: {formData.url}
+            </p>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-blue-700 text-blue-100 py-3 px-4 rounded-xl font-semibold hover:bg-blue-600 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Submitting..." : "Add Skin"}
+        </button>
+      </form>
+    </div>
   );
 };
 
