@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
 
 interface Card {
   title: string;
@@ -74,45 +73,6 @@ const Home: React.FC = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Skin Tools ML - Unlock Skins and Effects for Mobile Legends</title>
-        <meta
-          name="description"
-          content="Explore Skin Tools ML to unlock exclusive Mobile Legends skins, recall animations, spawn effects, and more. Enhance your gaming experience today!"
-        />
-        <meta
-          name="keywords"
-          content="Skin Tools ML, Mobile Legends, MLBB, unlock skins, recall animation, spawn effect, battle emote"
-        />
-        <meta name="robots" content="index, follow" />
-        <meta
-          property="og:title"
-          content="Skin Tools ML - Unlock Skins and Effects"
-        />
-        <meta
-          property="og:description"
-          content="Unlock exclusive Mobile Legends skins, recall animations, spawn effects, and more with Skin Tools ML. Elevate your gameplay!"
-        />
-        <meta
-          property="og:image"
-          content="https://images.dwncdn.net/images/t_app-icon-l/p/99017561-4e15-42b5-9538-a6f4b1f0f1eb/259597479/skin-tools-ml-oti-logo"
-        />
-        <meta property="og:url" content="https://yourusername.github.io/" />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta
-          name="twitter:title"
-          content="Skin Tools ML - Unlock Skins and Effects"
-        />
-        <meta
-          name="twitter:description"
-          content="Unlock exclusive Mobile Legends skins, recall animations, spawn effects, and more with Skin Tools ML."
-        />
-        <meta
-          name="twitter:image"
-          content="https://images.dwncdn.net/images/t_app-icon-l/p/99017561-4e15-42b5-9538-a6f4b1f0f1eb/259597479/skin-tools-ml-oti-logo"
-        />
-      </Helmet>
       <div className="relative bg-gray-900">
         {showSplash && (
           <div className="fixed inset-0 z-50 flex justify-center items-center bg-black animate-glitch overflow-hidden">
