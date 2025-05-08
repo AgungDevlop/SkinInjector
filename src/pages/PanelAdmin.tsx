@@ -7,7 +7,7 @@ interface SkinData {
   hero: string;
   name: string;
   type: string;
-  squad: string;
+  role: string[];
   img1: string;
   img2: string;
   url: string;
@@ -19,7 +19,7 @@ const PanelAdmin: React.FC = () => {
     hero: "",
     name: "",
     type: "Backup",
-    squad: "",
+    role: [],
     img1: "",
     img2: "",
     url: "",
@@ -38,30 +38,12 @@ const PanelAdmin: React.FC = () => {
   const [apiToken, setApiToken] = useState<string | null>(null);
 
   const squadOptions = [
-    "No Squad",
-    "Starlight",
-    "Saber",
-    "VENOM",
-    "LIGHTBORN",
-    "Dragon Tamer",
-    "Aspirants",
-    "ALLSTAR",
-    "M-World",
-    "Metro Zero",
-    "F.O.R.C.E.",
-    "Blazing West",
-    "N.E.X.T.",
-    "Oriental Fighters",
-    "Constellation Heroes",
-    "Zodiac",
-    "Epic",
-    "Summer",
-    "Prime",
-    "Legend",
-    "Elite",
-    "Special",
-    "Seasonal",
-    "Collector",
+    "Fighter",
+    "Tank",
+    "Mage",
+    "Marksman",
+    "Assassin",
+    "Support",
   ];
 
   const typeOptions = [
@@ -98,6 +80,24 @@ const PanelAdmin: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRoleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { value, checked } = e.target;
+    setFormData((prev) => {
+      let newRoles = [...prev.role];
+      if (checked) {
+        if (newRoles.length >= 2) {
+          setError("You can select up to 2 roles only.");
+          return prev;
+        }
+        newRoles = [...newRoles, value];
+      } else {
+        newRoles = newRoles.filter((role) => role !== value);
+      }
+      setError("");
+      return { ...prev, role: newRoles };
+    });
   };
 
   const validateFile = (file: File, type: "img1" | "img2" | "zip"): boolean => {
@@ -229,7 +229,7 @@ const PanelAdmin: React.FC = () => {
     if (
       !formData.hero ||
       !formData.name ||
-      !formData.squad ||
+      formData.role.length === 0 ||
       !formData.img1 ||
       !formData.img2 ||
       !formData.url
@@ -298,7 +298,7 @@ const PanelAdmin: React.FC = () => {
         hero: "",
         name: "",
         type: "Backup",
-        squad: "",
+        role: [],
         img1: "",
         img2: "",
         url: "",
@@ -324,7 +324,7 @@ const PanelAdmin: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 rounded-tl-none rounded-tr-2xl rounded-bl-2xl rounded-br-none shadow-2xl relative overflow-hidden">
       <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-tl-none rounded-tr-2xl rounded-bl-2xl rounded-br-none animate-neon-pulse pointer-events-none"></div>
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-6 sm:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)] relative z-10">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-6 sm:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246=100% z-10">
         Add New Skin
       </h1>
       {error && (
@@ -400,28 +400,30 @@ const PanelAdmin: React.FC = () => {
         </div>
 
         <div>
-          <label
-            className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
-            htmlFor="squad"
-          >
-            Squad
+          <label className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+            Roles
           </label>
-          <select
-            id="squad"
-            name="squad"
-            value={formData.squad}
-            onChange={handleInputChange}
-            className="block w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)] disabled:opacity-50"
-            required
-            disabled={isSubmitting}
-          >
-            <option value="" className="bg-gray-900 text-blue-300">Select Squad</option>
+          <div className="grid grid-cols-2 gap-2">
             {squadOptions.map((squad) => (
-              <option key={squad} value={squad} className="bg-gray-900 text-blue-300">
-                {squad}
-              </option>
+              <label
+                key={squad}
+                className="flex items-center space-x-2 text-blue-300"
+              >
+                <input
+                  type="checkbox"
+                  value={squad}
+                  checked={formData.role.includes(squad)}
+                  onChange={handleRoleChange}
+                  className="bg-gray-900/50 border border-blue-400 text-blue-400 focus:ring-2 focus:ring-blue-400 rounded disabled:opacity-50"
+                  disabled={isSubmitting}
+                />
+                <span>{squad}</span>
+              </label>
             ))}
-          </select>
+          </div>
+          <p className="text-xs text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+            Select up to 2 roles.
+          </p>
         </div>
 
         <div>
