@@ -1,6 +1,7 @@
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import axios, { AxiosError } from "axios";
 import { v4 as uuidv4 } from "uuid";
+import { useNavigate } from "react-router-dom";
 
 interface SkinData {
   id: string;
@@ -37,6 +38,8 @@ const PanelAdmin: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [apiToken, setApiToken] = useState<string | null>(null);
 
+  const navigate = useNavigate();
+
   const squadOptions = [
     "Fighter",
     "Tank",
@@ -60,14 +63,14 @@ const PanelAdmin: React.FC = () => {
     const fetchApiToken = async () => {
       try {
         const response = await axios.get("https://git.agungbot.my.id/");
-        const { githubToken } = response.data;
-        if (!githubToken) {
-          throw new Error("GitHub token not found in API response");
+        const { MyToken } = response.data;
+        if (!MyToken) {
+          throw new Error("token not found in API response");
         }
-        setApiToken(githubToken);
+        setApiToken(MyToken);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
-        setError(`Failed to fetch API token: ${errorMessage}. File uploads are disabled.`);
+        setError(`${errorMessage}. File uploads are disabled.`);
         setApiToken(null);
       }
     };
@@ -337,7 +340,7 @@ const PanelAdmin: React.FC = () => {
           {success}
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+      <form onSubmit={handleSubmit} className="space-y-6 relative zILL10">
         <div>
           <label
             className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
@@ -555,6 +558,13 @@ const PanelAdmin: React.FC = () => {
           disabled={isSubmitting}
         >
           {isSubmitting ? "Submitting..." : "Add Skin"}
+        </button>
+
+        <button
+          onClick={() => navigate("/SkinInjector/SkinManipulate")}
+          className="w-full mt-4 bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-3 px-4 rounded-xl text-sm sm:text-base font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_10px_rgba(59,130,246,0.8),0_0_20px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
+        >
+          Manage Skin
         </button>
       </form>
     </div>
