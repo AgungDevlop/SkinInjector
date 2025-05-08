@@ -5,6 +5,7 @@ import "./index.css";
 import { RouterProvider, createBrowserRouter} from "react-router-dom";
 import Home from "./pages/Home";
 import PanelAdmin from "./pages/PanelAdmin";
+import ViewSkin from "./pages/ViewSkin";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const ErrorFallback = (
@@ -36,6 +37,11 @@ const router = createBrowserRouter([
         element: <PanelAdmin />,
         errorElement: ErrorFallback,
       },
+      {
+        path: "unlock-skin",
+        element: <ViewSkin />,
+        errorElement: ErrorFallback,
+      }, 
     ],
   },
 ]);
