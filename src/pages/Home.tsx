@@ -63,7 +63,7 @@ const Home: React.FC = () => {
 
   return (
     <>
-      <div className="relative bg-gray-900">
+      <div className="relative">
         {showSplash && <SplashAnimation onAnimationComplete={() => setShowSplash(false)} />}
 
         <div className="container mx-auto p-2 sm:p-3 text-white">
