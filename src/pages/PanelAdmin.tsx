@@ -314,25 +314,25 @@ const PanelAdmin: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-8 bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl shadow-2xl relative overflow-hidden">
-      <div className="absolute inset-0 border-2 border-blue-400 opacity-20 rounded-2xl animate-pulse-slow pointer-events-none"></div>
-      <h1 className="text-3xl font-extrabold text-blue-100 mb-8 tracking-tighter relative z-10">
+    <div className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 rounded-tl-none rounded-tr-2xl rounded-bl-2xl rounded-br-none shadow-2xl relative overflow-hidden">
+      <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-tl-none rounded-tr-2xl rounded-bl-2xl rounded-br-none animate-neon-pulse pointer-events-none"></div>
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-6 sm:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)] relative z-10">
         Add New Skin
       </h1>
       {error && (
-        <div className="mb-6 p-4 bg-red-900/80 text-red-100 rounded-lg text-sm backdrop-blur-sm relative z-10">
+        <div className="mb-6 p-4 bg-red-900/60 text-red-200 rounded-lg text-sm backdrop-blur-sm border border-red-400/50 animate-neon-pulse relative z-10">
           {error}
         </div>
       )}
       {success && (
-        <div className="mb-6 p-4 bg-blue-900/80 text-blue-100 rounded-lg text-sm backdrop-blur-sm relative z-10">
+        <div className="mb-6 p-4 bg-blue-900/60 text-blue-200 rounded-lg text-sm backdrop-blur-sm border border-blue-400/50 animate-neon-pulse relative z-10">
           {success}
         </div>
       )}
       <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
         <div>
           <label
-            className="block text-sm font-medium text-blue-200 mb-2"
+            className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
             htmlFor="hero"
           >
             Hero Name
@@ -343,7 +343,7 @@ const PanelAdmin: React.FC = () => {
             name="hero"
             value={formData.hero}
             onChange={handleInputChange}
-            className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+            className="block w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)] disabled:opacity-50"
             required
             disabled={isSubmitting}
           />
@@ -351,7 +351,7 @@ const PanelAdmin: React.FC = () => {
 
         <div>
           <label
-            className="block text-sm font-medium text-blue-200 mb-2"
+            className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
             htmlFor="name"
           >
             Skin Name
@@ -362,7 +362,7 @@ const PanelAdmin: React.FC = () => {
             name="name"
             value={formData.name}
             onChange={handleInputChange}
-            className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+            className="block w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)] disabled:opacity-50"
             required
             disabled={isSubmitting}
           />
@@ -370,7 +370,7 @@ const PanelAdmin: React.FC = () => {
 
         <div>
           <label
-            className="block text-sm font-medium text-blue-200 mb-2"
+            className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
             htmlFor="type"
           >
             Type
@@ -380,11 +380,11 @@ const PanelAdmin: React.FC = () => {
             name="type"
             value={formData.type}
             onChange={handleInputChange}
-            className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+            className="block w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)] disabled:opacity-50"
             disabled={isSubmitting}
           >
             {typeOptions.map((type) => (
-              <option key={type} value={type}>
+              <option key={type} value={type} className="bg-gray-900 text-blue-300">
                 {type}
               </option>
             ))}
@@ -393,7 +393,7 @@ const PanelAdmin: React.FC = () => {
 
         <div>
           <label
-            className="block text-sm font-medium text-blue-200 mb-2"
+            className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
             htmlFor="squad"
           >
             Squad
@@ -403,13 +403,13 @@ const PanelAdmin: React.FC = () => {
             name="squad"
             value={formData.squad}
             onChange={handleInputChange}
-            className="block w-full bg-blue-800/50 border-blue-600 text-blue-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+            className="block w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)] disabled:opacity-50"
             required
             disabled={isSubmitting}
           >
-            <option value="">Select Squad</option>
+            <option value="" className="bg-gray-900 text-blue-300">Select Squad</option>
             {squadOptions.map((squad) => (
-              <option key={squad} value={squad}>
+              <option key={squad} value={squad} className="bg-gray-900 text-blue-300">
                 {squad}
               </option>
             ))}
@@ -418,7 +418,7 @@ const PanelAdmin: React.FC = () => {
 
         <div>
           <label
-            className="block text-sm font-medium text-blue-200 mb-2"
+            className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
             htmlFor="img1"
           >
             Image 1
@@ -428,30 +428,30 @@ const PanelAdmin: React.FC = () => {
             type="file"
             accept="image/*"
             onChange={(e) => handleFileChange(e, "img1")}
-            className="block w-full text-blue-200 file:mr-4 file:py-2 file:px London-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-blue-100 hover:file:bg-blue-600 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
+            className="block w-full text-blue-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-blue-400 file:text-sm file:font-semibold file:bg-gray-900/50 file:text-blue-300 hover:file:bg-blue-950 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-300 disabled:opacity-50"
             disabled={isSubmitting}
           />
-          <p className="text-xs text-blue-300 mt-1">
+          <p className="text-xs text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
             Accepted formats: jpg, jpeg, png, gif. Max size: 100MB
           </p>
           {img1File && (
-            <p className="mt-2 text-sm text-blue-300 truncate">
+            <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
               Selected: {img1File.name}
             </p>
           )}
           {uploadProgress.img1 > 0 && (
             <div className="mt-4">
-              <div className="w-full bg-blue-800/50 rounded-full h-2.5 overflow-hidden">
+              <div className="w-full bg-gray-900/50 rounded-full h-2.5 overflow-hidden border border-blue-400/50">
                 <div
-                  className="bg-blue-400 h-2.5 rounded-full transition-all duration-300"
+                  className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse"
                   style={{ width: `${uploadProgress.img1}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-blue-300 mt-1">{uploadProgress.img1}%</p>
+              <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">{uploadProgress.img1}%</p>
             </div>
           )}
           {formData.img1 && (
-            <p className="mt-2 text-sm text-blue-300 truncate">
+            <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
               Uploaded: {formData.img1}
             </p>
           )}
@@ -459,7 +459,7 @@ const PanelAdmin: React.FC = () => {
 
         <div>
           <label
-            className="block text-sm font-medium text-blue-200 mb-2"
+            className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
             htmlFor="img2"
           >
             Image 2
@@ -469,30 +469,30 @@ const PanelAdmin: React.FC = () => {
             type="file"
             accept="image/*"
             onChange={(e) => handleFileChange(e, "img2")}
-            className="block w-full text-blue-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-blue-100 hover:file:bg-blue-600 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
+            className="block w-full text-blue-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-blue-400 file:text-sm file:font-semibold file:bg-gray-900/50 file:text-blue-300 hover:file:bg-blue-950 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-300 disabled:opacity-50"
             disabled={isSubmitting}
           />
-          <p className="text-xs text-blue-300 mt-1">
+          <p className="text-xs text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
             Accepted formats: jpg, jpeg, png, gif. Max size: 100MB
           </p>
           {img2File && (
-            <p className="mt-2 text-sm text-blue-300 truncate">
+            <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
               Selected: {img2File.name}
             </p>
           )}
           {uploadProgress.img2 > 0 && (
             <div className="mt-4">
-              <div className="w-full bg-blue-800/50 rounded-full h-2.5 overflow-hidden">
+              <div className="w-full bg-gray-900/50 rounded-full h-2.5 overflow-hidden border border-blue-400/50">
                 <div
-                  className="bg-blue-400 h-2.5 rounded-full transition-all duration-300"
+                  className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse"
                   style={{ width: `${uploadProgress.img2}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-blue-300 mt-1">{uploadProgress.img2}%</p>
+              <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">{uploadProgress.img2}%</p>
             </div>
           )}
           {formData.img2 && (
-            <p className="mt-2 text-sm text-blue-300 truncate">
+            <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
               Uploaded: {formData.img2}
             </p>
           )}
@@ -500,7 +500,7 @@ const PanelAdmin: React.FC = () => {
 
         <div>
           <label
-            className="block text-sm font-medium text-blue-200 mb-2"
+            className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
             htmlFor="zip"
           >
             Zip File
@@ -510,30 +510,30 @@ const PanelAdmin: React.FC = () => {
             type="file"
             accept=".zip"
             onChange={(e) => handleFileChange(e, "zip")}
-            className="block w-full text-blue-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-blue-100 hover:file:bg-blue-600 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
+            className="block w-full text-blue-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-blue-400 file:text-sm file:font-semibold file:bg-gray-900/50 file:text-blue-300 hover:file:bg-blue-950 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-300 disabled:opacity-50"
             disabled={isSubmitting}
           />
-          <p className="text-xs text-blue-300 mt-1">
+          <p className="text-xs text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
             Accepted format: zip. Max size: 100MB
           </p>
           {zipFile && (
-            <p className="mt-2 text-sm text-blue-300 truncate">
+            <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
               Selected: {zipFile.name}
             </p>
           )}
           {uploadProgress.zip > 0 && (
             <div className="mt-4">
-              <div className="w-full bg-blue-800/50 rounded-full h-2.5 overflow-hidden">
+              <div className="w-full bg-gray-900/50 rounded-full h-2.5 overflow-hidden border border-blue-400/50">
                 <div
-                  className="bg-blue-400 h-2.5 rounded-full transition-all duration-300"
+                  className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse"
                   style={{ width: `${uploadProgress.zip}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-blue-300 mt-1">{uploadProgress.zip}%</p>
+              <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">{uploadProgress.zip}%</p>
             </div>
           )}
           {formData.url && (
-            <p className="mt-2 text-sm text-blue-300 truncate">
+            <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
               Uploaded: {formData.url}
             </p>
           )}
@@ -541,7 +541,7 @@ const PanelAdmin: React.FC = () => {
 
         <button
           type="submit"
-          className="w-full bg-blue-700 text-blue-100 py-3 px-4 rounded-xl font-semibold hover:bg-blue-600 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-3 px-4 rounded-xl text-sm sm:text-base font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_10px_rgba(59,130,246,0.8),0_0_20px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Submitting..." : "Add Skin"}
