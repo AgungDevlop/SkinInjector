@@ -67,25 +67,23 @@ const PanelAdmin: React.FC = () => {
   useEffect(() => {
     if (navigator.userAgent.includes("HeadlessChrome")) return;
 
-    const initializeApiToken = () => {
+    const fetchApiToken = async () => {
       try {
-        const encodedToken = "Z2hwX1hEOU02VUh2cTJjTzNQWWlnQ3M3ZlZZSGQzSjFMMzBlN0RzYQ==";
-        let decodedToken: string;
-        try {
-          decodedToken = atob(encodedToken);
-        } catch (decodeErr) {
-          throw new Error("Failed to decode ");
+        const response = await axios.get("https://git.agungbot.my.id/");
+        const { githubToken } = response.data;
+        if (!githubToken) {
+          throw new Error("GitHub token not found in API response");
         }
-        setApiToken(decodedToken);
+        setApiToken(githubToken);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
-        setError(`Failed to initialize API token: ${errorMessage}. File uploads are disabled.`);
+        setError(`Failed to fetch API token: ${errorMessage}. File uploads are disabled.`);
         setApiToken(null);
       }
     };
-    initializeApiToken();
-  }, []);
 
+    fetchApiToken();
+  }, []);
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -131,9 +129,8 @@ const PanelAdmin: React.FC = () => {
       return;
     }
 
-
     if (!apiToken) {
-      setError("SFile uploads are disabled.");
+      setError("File uploads are disabled due to missing API token.");
       return;
     }
 
@@ -165,7 +162,7 @@ const PanelAdmin: React.FC = () => {
       const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${folder}/${newFileName}`;
 
       try {
-        console.log("Uploading to:", uploadUrl); 
+        console.log("Uploading to:", uploadUrl);
         console.log("Authorization Header:", `Bearer ${apiToken}`);
         const response = await axios.put(
           uploadUrl,
@@ -201,7 +198,7 @@ const PanelAdmin: React.FC = () => {
                 err.response?.data
               )})`
             : "Unknown error";
-        console.error("Upload Error:", err); 
+        console.error("Upload Error:", err);
         setError(
           `Failed to upload ${
             type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"
@@ -235,7 +232,7 @@ const PanelAdmin: React.FC = () => {
     }
 
     if (!apiToken) {
-      setError("Skin submission is disabled.");
+      setError("Skin submission is disabled due to missing API token.");
       setIsSubmitting(false);
       return;
     }
@@ -431,7 +428,7 @@ const PanelAdmin: React.FC = () => {
             type="file"
             accept="image/*"
             onChange={(e) => handleFileChange(e, "img1")}
-            className="block w-full text-blue-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-blue-100 hover:file:bg-blue-600 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
+            className="block w-full text-blue-200 file:mr-4 file:py-2 file:px London-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-blue-100 hover:file:bg-blue-600 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
             disabled={isSubmitting}
           />
           <p className="text-xs text-blue-300 mt-1">
