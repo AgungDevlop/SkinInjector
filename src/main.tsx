@@ -2,10 +2,17 @@ import * as React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { RouterProvider, createBrowserRouter} from "react-router-dom";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import Home from "./pages/Home";
 import PanelAdmin from "./pages/PanelAdmin";
 import ViewSkin from "./pages/ViewSkin";
+import PanelBattleEffect from "./pages/PanelBattleEffect";
+import ViewRecall from "./pages/ViewRecall";
+import ViewSpawn from "./pages/ViewSpawn";
+import ViewBattleEmote from "./pages/ViewBattleEmote";
+import ViewElimination from "./pages/ViewElimination";
+import SkinManipulate from "./pages/SkinManipulate";
+import ManageBattleEffect from "./pages/ManageBattleEffect";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const ErrorFallback = (
@@ -38,10 +45,45 @@ const router = createBrowserRouter([
         errorElement: ErrorFallback,
       },
       {
+        path: "PanelBattleEffect",
+        element: <PanelBattleEffect />,
+        errorElement: ErrorFallback,
+      },
+      {
+        path: "SkinManipulate",
+        element: <SkinManipulate />,
+        errorElement: ErrorFallback,
+      },
+      {
+        path: "ManageBattleEffect",
+        element: <ManageBattleEffect />,
+        errorElement: ErrorFallback,
+      },
+      {
         path: "unlock-skin",
         element: <ViewSkin />,
         errorElement: ErrorFallback,
-      }, 
+      },
+      {
+        path: "recall-animation",
+        element: <ViewRecall />,
+        errorElement: ErrorFallback,
+      },
+      {
+        path: "spawn-effect",
+        element: <ViewSpawn />,
+        errorElement: ErrorFallback,
+      },
+      {
+        path: "battle-emote",
+        element: <ViewBattleEmote />,
+        errorElement: ErrorFallback,
+      },
+      {
+        path: "elimination-effect",
+        element: <ViewElimination />,
+        errorElement: ErrorFallback,
+      },
     ],
   },
 ]);
