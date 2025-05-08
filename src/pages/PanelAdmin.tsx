@@ -63,14 +63,14 @@ const PanelAdmin: React.FC = () => {
     const fetchApiToken = async () => {
       try {
         const response = await axios.get("https://git.agungbot.my.id/");
-        const { MyToken } = response.data;
-        if (!MyToken) {
-          throw new Error("token not found in API response");
+        const { githubToken } = response.data;
+        if (!githubToken) {
+          throw new Error("GitHub token not found in API response");
         }
-        setApiToken(MyToken);
+        setApiToken(githubToken);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
-        setError(`${errorMessage}. File uploads are disabled.`);
+        setError(`Failed to fetch GitHub token: ${errorMessage}. File uploads are disabled.`);
         setApiToken(null);
       }
     };
@@ -327,7 +327,7 @@ const PanelAdmin: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 rounded-tl-none rounded-tr-2xl rounded-bl-2xl rounded-br-none shadow-2xl relative overflow-hidden">
       <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-tl-none rounded-tr-2xl rounded-bl-2xl rounded-br-none animate-neon-pulse pointer-events-none"></div>
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-6 sm:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246=100% z-10">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-6 sm:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,1)] relative z-10">
         Add New Skin
       </h1>
       {error && (
@@ -340,7 +340,7 @@ const PanelAdmin: React.FC = () => {
           {success}
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-6 relative zILL10">
+      <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
         <div>
           <label
             className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
@@ -501,7 +501,7 @@ const PanelAdmin: React.FC = () => {
                   style={{ width: `${uploadProgress.img2}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">{uploadProgress.img2}%</p>
+              <p className="text-sm text-blue-400 mt-1 drop-shadow-[ -------2px_rgba(59,130,246,0.8)]">{uploadProgress.img2}%</p>
             </div>
           )}
           {formData.img2 && (
