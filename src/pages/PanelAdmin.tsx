@@ -54,6 +54,14 @@ const PanelAdmin: React.FC = () => {
     "Oriental Fighters",
     "Constellation Heroes",
     "Zodiac",
+    "Epic",
+    "Summer",
+    "Prime",
+    "Legend",
+    "Elite",
+    "Special",
+    "Seasonal",
+    "Collector",
   ];
 
   const typeOptions = [
