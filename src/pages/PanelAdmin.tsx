@@ -14,6 +14,10 @@ interface SkinData {
   url: string;
 }
 
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const GITHUB_UPLOAD_THRESHOLD = 25 * 1024 * 1024; // 25MB
+const API_TOKEN = "AgungDeveloper";
+
 const PanelAdmin: React.FC = () => {
   const [formData, setFormData] = useState<SkinData>({
     id: "",
@@ -40,7 +44,7 @@ const PanelAdmin: React.FC = () => {
 
   const navigate = useNavigate();
 
-  const squadOptions = [
+  const squadOptions: string[] = [
     "Fighter",
     "Tank",
     "Mage",
@@ -49,7 +53,7 @@ const PanelAdmin: React.FC = () => {
     "Support",
   ];
 
-  const typeOptions = [
+  const typeOptions: string[] = [
     "Backup",
     "Original",
     "Upgrade",
@@ -60,9 +64,9 @@ const PanelAdmin: React.FC = () => {
   useEffect(() => {
     if (navigator.userAgent.includes("HeadlessChrome")) return;
 
-    const fetchApiToken = async () => {
+    const fetchApiToken = async (): Promise<void> => {
       try {
-        const response = await axios.get("https://git.agungbot.my.id/");
+        const response = await axios.get<{ githubToken: string }>("https://git.agungbot.my.id/");
         const { githubToken } = response.data;
         if (!githubToken) {
           throw new Error("GitHub token not found in API response");
@@ -80,12 +84,12 @@ const PanelAdmin: React.FC = () => {
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  ): void => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleRoleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleRoleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const { value, checked } = e.target;
     setFormData((prev) => {
       let newRoles = [...prev.role];
@@ -124,14 +128,113 @@ const PanelAdmin: React.FC = () => {
     return true;
   };
 
+  const uploadToGitHub = async (
+    file: File,
+    type: "img1" | "img2" | "zip",
+    newFileName: string,
+    base64Content: string
+  ): Promise<string | null> => {
+    const folder = type === "img1" ? "img1" : type === "img2" ? "img2" : "Skin";
+    const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${folder}/${newFileName}`;
+
+    try {
+      const response = await axios.put<{ content: { download_url: string } }>(
+        uploadUrl,
+        {
+          message: `Upload ${newFileName} to ${folder}`,
+          content: base64Content,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
+          },
+          onUploadProgress: (progressEvent) => {
+            const total = progressEvent.total ?? 1;
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / total);
+            setUploadProgress((prev) => ({ ...prev, [type]: percentCompleted }));
+          },
+        }
+      );
+      return response.data.content.download_url;
+    } catch (err) {
+      const errorMessage =
+        err instanceof AxiosError
+          ? `${err.message} (Status: ${err.response?.status}, Data: ${JSON.stringify(
+              err.response?.data
+            )})`
+          : "Unknown error";
+      setError(
+        `Failed to upload ${
+          type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"
+        } to GitHub: ${errorMessage}`
+      );
+      return null;
+    }
+  };
+
+  const uploadToCustomApi = async (
+    file: File,
+    type: "img1" | "img2" | "zip"
+  ): Promise<string | null> => {
+    if (!file.name.match(/\.zip$/i)) {
+      setError(`Invalid file format for ${type}. Only zip files are allowed.`);
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress((prev) => ({ ...prev, [type]: percentComplete }));
+      }
+    });
+
+    xhr.open("POST", "https://git.agungbot.my.id/api.php", true);
+    xhr.setRequestHeader("Authorization", `Bearer ${API_TOKEN}`);
+
+    return new Promise((resolve) => {
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.url) {
+              setUploadProgress((prev) => ({ ...prev, [type]: 0 }));
+              resolve(response.url);
+            } else {
+              setError(`Failed to get file URL from API for ${type}.`);
+              resolve(null);
+            }
+          } catch (parseError) {
+            setError(`Invalid response from API for ${type}.`);
+            resolve(null);
+          }
+        } else {
+          setError(`Failed to upload ${type} to API: ${xhr.statusText || "Unknown error"}`);
+          resolve(null);
+        }
+      };
+
+      xhr.onerror = () => {
+        setError(`Network error while uploading ${type} to API. Please check your connection or server status.`);
+        resolve(null);
+      };
+
+      xhr.send(formData);
+    });
+  };
+
   const handleFileChange = async (
     e: ChangeEvent<HTMLInputElement>,
     type: "img1" | "img2" | "zip"
-  ) => {
+  ): Promise<void> => {
     const file = e.target.files?.[0];
     if (!file || !validateFile(file, type)) return;
 
-    if (file.size > 100 * 1024 * 1024) {
+    if (file.size > MAX_FILE_SIZE) {
       setError(
         `File size exceeds 100MB limit for ${
           type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"
@@ -140,8 +243,8 @@ const PanelAdmin: React.FC = () => {
       return;
     }
 
-    if (!apiToken) {
-      setError("File uploads are disabled due to missing API token.");
+    if (!apiToken && type !== "zip") {
+      setError("File uploads are disabled due to missing GitHub API token.");
       return;
     }
 
@@ -151,78 +254,53 @@ const PanelAdmin: React.FC = () => {
 
     const randomId = uuidv4().slice(0, 8);
     const extension = file.name.split(".").pop() ?? "";
-    const newFileName = `${file.name.replace(
-      `.${extension}`,
-      ""
-    )}_${randomId}.${extension}`;
+    const newFileName = `${file.name.replace(`.${extension}`, "")}_${randomId}.${extension}`;
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-      if (typeof reader.result !== "string") {
-        setError("Failed to read file content.");
-        return;
-      }
-      const base64Content = reader.result.split(",")[1];
-      if (!base64Content) {
-        setError("Failed to read file content.");
-        return;
-      }
+    let fileUrl: string | null = null;
 
-      const folder = type === "img1" ? "img1" : type === "img2" ? "img2" : "Skin";
-      const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${folder}/${newFileName}`;
+    if (type === "zip" && file.size > GITHUB_UPLOAD_THRESHOLD) {
+      // Upload zip files > 25MB to custom API
+      fileUrl = await uploadToCustomApi(file, type);
+    } else {
+      // Upload to GitHub for files <= 25MB or images
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        if (typeof reader.result !== "string") {
+          setError("Failed to read file content.");
+          return;
+        }
+        const base64Content = reader.result.split(",")[1];
+        if (!base64Content) {
+          setError("Failed to read file content.");
+          return;
+        }
 
-      try {
-        console.log("Uploading to:", uploadUrl);
-        console.log("Authorization Header:", `Bearer ${apiToken}`);
-        const response = await axios.put(
-          uploadUrl,
-          {
-            message: `Upload ${newFileName} to ${folder}`,
-            content: base64Content,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${apiToken}`,
-              "Content-Type": "application/json",
-            },
-            onUploadProgress: (progressEvent) => {
-              const total = progressEvent.total ?? 1;
-              const percentCompleted = Math.round(
-                (progressEvent.loaded * 100) / total
-              );
-              setUploadProgress((prev) => ({ ...prev, [type]: percentCompleted }));
-            },
-          }
-        );
+        fileUrl = await uploadToGitHub(file, type, newFileName, base64Content);
+        if (fileUrl) {
+          setFormData((prev) => ({
+            ...prev,
+            [type === "zip" ? "url" : type]: fileUrl,
+          }));
+          setError("");
+        }
+      };
+      reader.onerror = () => {
+        setError("Error reading file.");
+      };
+      return; // Avoid setting formData until reader.onload completes
+    }
 
-        const rawUrl = response.data.content.download_url;
-        setFormData((prev) => ({
-          ...prev,
-          [type === "zip" ? "url" : type]: rawUrl,
-        }));
-        setError("");
-      } catch (err) {
-        const errorMessage =
-          err instanceof AxiosError
-            ? `${err.message} (Status: ${err.response?.status}, Data: ${JSON.stringify(
-                err.response?.data
-              )})`
-            : "Unknown error";
-        console.error("Upload Error:", err);
-        setError(
-          `Failed to upload ${
-            type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"
-          }: ${errorMessage}`
-        );
-      }
-    };
-    reader.onerror = () => {
-      setError("Error reading file.");
-    };
+    if (fileUrl) {
+      setFormData((prev) => ({
+        ...prev,
+        [type === "zip" ? "url" : type]: fileUrl,
+      }));
+      setError("");
+    }
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (isSubmitting) return;
     setError("");
@@ -243,7 +321,7 @@ const PanelAdmin: React.FC = () => {
     }
 
     if (!apiToken) {
-      setError("Skin submission is disabled due to missing API token.");
+      setError("Skin submission is disabled due to missing GitHub API token.");
       setIsSubmitting(false);
       return;
     }
@@ -261,7 +339,7 @@ const PanelAdmin: React.FC = () => {
       let currentSkins: SkinData[] = [];
       let sha: string | undefined;
       try {
-        const response = await axios.get(skinJsonUrl, {
+        const response = await axios.get<{ content: string; sha: string }>(skinJsonUrl, {
           headers: { Authorization: `Bearer ${apiToken}` },
         });
         if (response.data.content) {
@@ -326,7 +404,7 @@ const PanelAdmin: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 rounded-tl-none rounded-tr-2xl rounded-bl-2xl rounded-br-none shadow-2xl relative overflow-hidden">
-      <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-tl-none rounded-tr-2xl rounded-bl-2xl rounded-br-none animate-neon-pulse pointer-events-none"></div>
+      <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-tl-none rounded-tr-2xl rounded-bl-2xl rounded-br-none animate-neon-pulse pointer-events-none" />
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-6 sm:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,1)] relative z-10">
         Add New Skin
       </h1>
@@ -458,9 +536,11 @@ const PanelAdmin: React.FC = () => {
                 <div
                   className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse"
                   style={{ width: `${uploadProgress.img1}%` }}
-                ></div>
+                />
               </div>
-              <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">{uploadProgress.img1}%</p>
+              <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                {uploadProgress.img1}%
+              </p>
             </div>
           )}
           {formData.img1 && (
@@ -499,9 +579,11 @@ const PanelAdmin: React.FC = () => {
                 <div
                   className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse"
                   style={{ width: `${uploadProgress.img2}%` }}
-                ></div>
+                />
               </div>
-              <p className="text-sm text-blue-400 mt-1 drop-shadow-[ -------2px_rgba(59,130,246,0.8)]">{uploadProgress.img2}%</p>
+              <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                {uploadProgress.img2}%
+              </p>
             </div>
           )}
           {formData.img2 && (
@@ -540,9 +622,11 @@ const PanelAdmin: React.FC = () => {
                 <div
                   className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse"
                   style={{ width: `${uploadProgress.zip}%` }}
-                ></div>
+                />
               </div>
-              <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">{uploadProgress.zip}%</p>
+              <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                {uploadProgress.zip}%
+              </p>
             </div>
           )}
           {formData.url && (
@@ -561,6 +645,7 @@ const PanelAdmin: React.FC = () => {
         </button>
 
         <button
+          type="button"
           onClick={() => navigate("/SkinInjector/SkinManipulate")}
           className="w-full mt-4 bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-3 px-4 rounded-xl text-sm sm:text-base font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_10px_rgba(59,130,246,0.8),0_0_20px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
         >
