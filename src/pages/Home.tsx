@@ -16,7 +16,7 @@ const Home: React.FC = () => {
     {
       title: "Unlock Skin",
       image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcQULKxdP7uXsWMptLAosgCv47Zc3MAkSX4eZlhjfSjlch9DJ1r5MxvRA&s=10",
-      route: "/SkinInjector/unlock-skin",
+      route: "unlock-skin",
     },
     {
       title: "Recall Animation",
