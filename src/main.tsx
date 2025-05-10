@@ -30,7 +30,7 @@ const ErrorFallback = (
 
 const router = createBrowserRouter([
   {
-    path: "SkinInjector",
+    path: "/",
     element: <App />,
     errorElement: ErrorFallback,
     children: [
