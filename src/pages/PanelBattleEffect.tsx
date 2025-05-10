@@ -550,7 +550,7 @@ const PanelBattleEffect: React.FC = () => {
         </button>
         <button
           type="button"
-          onClick={() => navigate("/SkinInjector/ManageBattleEffect")}
+          onClick={() => navigate("/ManageBattleEffect")}
           className="w-full mt-4 bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-3 px-4 rounded-xl text-sm sm:text-base font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_10px_rgba(59,130,246,0.8),0_0_20px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
         >
           Manage Battle Effect
