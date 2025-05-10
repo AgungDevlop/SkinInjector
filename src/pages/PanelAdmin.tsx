@@ -9,9 +9,9 @@ interface SkinData {
   name: string;
   type: string;
   role: string[];
-  img1: string;
-  img2: string;
-  url: string;
+  img1: string | null;
+  img2: string | null;
+  url: string | null;
 }
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
@@ -25,9 +25,9 @@ const PanelAdmin: React.FC = () => {
     name: "",
     type: "Backup",
     role: [],
-    img1: "",
-    img2: "",
-    url: "",
+    img1: null,
+    img2: null,
+    url: null,
   });
   const [img1File, setImg1File] = useState<File | null>(null);
   const [img2File, setImg2File] = useState<File | null>(null);
@@ -129,7 +129,6 @@ const PanelAdmin: React.FC = () => {
   };
 
   const uploadToGitHub = async (
-    file: File,
     type: "img1" | "img2" | "zip",
     newFileName: string,
     base64Content: string
@@ -276,7 +275,7 @@ const PanelAdmin: React.FC = () => {
           return;
         }
 
-        fileUrl = await uploadToGitHub(file, type, newFileName, base64Content);
+        fileUrl = await uploadToGitHub(type, newFileName, base64Content);
         if (fileUrl) {
           setFormData((prev) => ({
             ...prev,
@@ -380,9 +379,9 @@ const PanelAdmin: React.FC = () => {
         name: "",
         type: "Backup",
         role: [],
-        img1: "",
-        img2: "",
-        url: "",
+        img1: null,
+        img2: null,
+        url: null,
       });
       setImg1File(null);
       setImg2File(null);
