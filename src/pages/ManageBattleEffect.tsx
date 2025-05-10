@@ -5,12 +5,15 @@ import { v4 as uuidv4 } from "uuid";
 interface EffectData {
   id: string;
   name: string;
-  img1: string;
-  img2: string;
-  url: string;
+  img1: string | null;
+  img2: string | null;
+  url: string | null;
 }
 
 const effectTypes = ["Recall", "Spawn", "Battle Emote", "Elimination"];
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const GITHUB_UPLOAD_THRESHOLD = 25 * 1024 * 1024; // 25MB
+const API_TOKEN = "AgungDeveloper";
 
 const ManageBattleEffect: React.FC = () => {
   const [effects, setEffects] = useState<{ [key: string]: EffectData[] }>({});
@@ -27,9 +30,9 @@ const ManageBattleEffect: React.FC = () => {
   const [formData, setFormData] = useState<EffectData>({
     id: "",
     name: "",
-    img1: "",
-    img2: "",
-    url: "",
+    img1: null,
+    img2: null,
+    url: null,
   });
   const [img1File, setImg1File] = useState<File | null>(null);
   const [img2File, setImg2File] = useState<File | null>(null);
@@ -44,9 +47,9 @@ const ManageBattleEffect: React.FC = () => {
   useEffect(() => {
     if (navigator.userAgent.includes("HeadlessChrome")) return;
 
-    const fetchApiToken = async () => {
+    const fetchApiToken = async (): Promise<void> => {
       try {
-        const response = await axios.get("https://git.agungbot.my.id/");
+        const response = await axios.get<{ githubToken: string }>("https://git.agungbot.my.id/");
         const { githubToken } = response.data;
         if (!githubToken) throw new Error("GitHub token not found");
         setApiToken(githubToken);
@@ -62,12 +65,12 @@ const ManageBattleEffect: React.FC = () => {
   useEffect(() => {
     if (!apiToken) return;
 
-    const fetchEffects = async () => {
+    const fetchEffects = async (): Promise<void> => {
       try {
         const effectsData: { [key: string]: EffectData[] } = {};
         for (const type of effectTypes) {
           const jsonFileName = `${type.replace(" ", "")}.json`;
-          const response = await axios.get(
+          const response = await axios.get<{ content: string; sha: string }>(
             `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${jsonFileName}`,
             { headers: { Authorization: `Bearer ${apiToken}` } }
           );
@@ -98,9 +101,15 @@ const ManageBattleEffect: React.FC = () => {
     setFilteredEffects(filtered);
   }, [searchQuery, typeFilter, effects]);
 
-  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value);
-  const handleTypeChange = (e: ChangeEvent<HTMLSelectElement>) => setTypeFilter(e.target.value);
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleTypeChange = (e: ChangeEvent<HTMLSelectElement>): void => {
+    setTypeFilter(e.target.value);
+  };
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -112,22 +121,136 @@ const ManageBattleEffect: React.FC = () => {
       setError("Please select a .zip file for Zip File.");
       return false;
     }
-    if ((type === "img1" || type === "img2") && !validImageExtensions.includes(extension)) {
-      setError(`Please select an image file for ${type === "img1" ? "Image 1" : "Image 2"}.`);
+    if (
+      (type === "img1" || type === "img2") &&
+      !validImageExtensions.includes(extension)
+    ) {
+      setError(
+        `Please select an image file (jpg, jpeg, png, gif) for ${
+          type === "img1" ? "Image 1" : "Image 2"
+        }.`
+      );
       return false;
     }
     return true;
   };
 
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>, type: "img1" | "img2" | "zip") => {
+  const uploadToGitHub = async (
+    type: "img1" | "img2" | "zip",
+    newFileName: string,
+    base64Content: string
+  ): Promise<string | null> => {
+    const folder = type === "img1" ? "img1" : type === "img2" ? "img2" : editType.replace(" ", "");
+    const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${folder}/${newFileName}`;
+
+    try {
+      const response = await axios.put<{ content: { download_url: string } }>(
+        uploadUrl,
+        {
+          message: `Upload ${newFileName} to ${folder}`,
+          content: base64Content,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
+          },
+          onUploadProgress: (progressEvent) => {
+            const total = progressEvent.total ?? 1;
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / total);
+            setUploadProgress((prev) => ({ ...prev, [type]: percentCompleted }));
+          },
+        }
+      );
+      return response.data.content.download_url;
+    } catch (err) {
+      const errorMessage =
+        err instanceof AxiosError
+          ? `${err.message} (Status: ${err.response?.status}, Data: ${JSON.stringify(
+              err.response?.data
+            )})`
+          : "Unknown error";
+      setError(
+        `Failed to upload ${
+          type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"
+        } to GitHub: ${errorMessage}`
+      );
+      return null;
+    }
+  };
+
+  const uploadToCustomApi = async (
+    file: File,
+    type: "img1" | "img2" | "zip"
+  ): Promise<string | null> => {
+    if (!file.name.match(/\.zip$/i)) {
+      setError(`Invalid file format for ${type}. Only zip files are allowed.`);
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress((prev) => ({ ...prev, [type]: percentComplete }));
+      }
+    });
+
+    xhr.open("POST", "https://git.agungbot.my.id/api.php", true);
+    xhr.setRequestHeader("Authorization", `Bearer ${API_TOKEN}`);
+
+    return new Promise((resolve) => {
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.url) {
+              setUploadProgress((prev) => ({ ...prev, [type]: 0 }));
+              resolve(response.url);
+            } else {
+              setError(`Failed to get file URL from API for ${type}.`);
+              resolve(null);
+            }
+          } catch (parseError) {
+            setError(`Invalid response from API for ${type}.`);
+            resolve(null);
+          }
+        } else {
+          setError(`Failed to upload ${type} to API: ${xhr.statusText || "Unknown error"}`);
+          resolve(null);
+        }
+      };
+
+      xhr.onerror = () => {
+        setError(`Network error while uploading ${type} to API. Please check your connection or server status.`);
+        resolve(null);
+      };
+
+      xhr.send(formData);
+    });
+  };
+
+  const handleFileChange = async (
+    e: ChangeEvent<HTMLInputElement>,
+    type: "img1" | "img2" | "zip"
+  ): Promise<void> => {
     const file = e.target.files?.[0];
     if (!file || !validateFile(file, type)) return;
-    if (file.size > 100 * 1024 * 1024) {
-      setError(`File size exceeds 100MB for ${type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"}.`);
+
+    if (file.size > MAX_FILE_SIZE) {
+      setError(
+        `File size exceeds 100MB limit for ${
+          type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"
+        }.`
+      );
       return;
     }
-    if (!apiToken) {
-      setError("File uploads disabled due to missing API token.");
+
+    if (!apiToken && type !== "zip") {
+      setError("File uploads are disabled due to missing GitHub API token.");
       return;
     }
 
@@ -138,34 +261,52 @@ const ManageBattleEffect: React.FC = () => {
     const randomId = uuidv4().slice(0, 8);
     const extension = file.name.split(".").pop() ?? "";
     const newFileName = `${file.name.replace(`.${extension}`, "")}_${randomId}.${extension}`;
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-      const base64Content = (reader.result as string).split(",")[1];
-      const folder = type === "img1" ? "img1" : type === "img2" ? "img2" : editType.replace(" ", "");
-      const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${folder}/${newFileName}`;
 
-      try {
-        const response = await axios.put(
-          uploadUrl,
-          { message: `Upload ${newFileName}`, content: base64Content },
-          {
-            headers: { Authorization: `Bearer ${apiToken}`, "Content-Type": "application/json" },
-            onUploadProgress: (progressEvent) => {
-              const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
-              setUploadProgress((prev) => ({ ...prev, [type]: percentCompleted }));
-            },
-          }
-        );
-        setFormData((prev) => ({ ...prev, [type === "zip" ? "url" : type]: response.data.content.download_url }));
-      } catch (err) {
-        const errorMessage = err instanceof AxiosError ? err.message : "Unknown error";
-        setError(`Failed to upload ${type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"}: ${errorMessage}`);
-      }
-    };
+    let fileUrl: string | null = null;
+
+    if (type === "zip" && file.size > GITHUB_UPLOAD_THRESHOLD) {
+      // Upload zip files > 25MB to custom API
+      fileUrl = await uploadToCustomApi(file, type);
+    } else {
+      // Upload to GitHub for files <= 25MB or images
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        if (typeof reader.result !== "string") {
+          setError("Failed to read file content.");
+          return;
+        }
+        const base64Content = reader.result.split(",")[1];
+        if (!base64Content) {
+          setError("Failed to read file content.");
+          return;
+        }
+
+        fileUrl = await uploadToGitHub(type, newFileName, base64Content);
+        if (fileUrl) {
+          setFormData((prev) => ({
+            ...prev,
+            [type === "zip" ? "url" : type]: fileUrl,
+          }));
+          setError("");
+        }
+      };
+      reader.onerror = () => {
+        setError("Error reading file.");
+      };
+      return; // Avoid setting formData until reader.onload completes
+    }
+
+    if (fileUrl) {
+      setFormData((prev) => ({
+        ...prev,
+        [type === "zip" ? "url" : type]: fileUrl,
+      }));
+      setError("");
+    }
   };
 
-  const openEditModal = (effect: EffectData, type: string) => {
+  const openEditModal = (effect: EffectData, type: string): void => {
     setEditEffect(effect);
     setEditType(type);
     setFormData(effect);
@@ -176,16 +317,16 @@ const ManageBattleEffect: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const closeModal = () => {
+  const closeModal = (): void => {
     setIsModalOpen(false);
     setEditEffect(null);
     setEditType("");
-    setFormData({ id: "", name: "", img1: "", img2: "", url: "" });
+    setFormData({ id: "", name: "", img1: null, img2: null, url: null });
     setError("");
     setSuccess("");
   };
 
-  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (isSubmitting || !editEffect || !editType) return;
     setIsSubmitting(true);
@@ -201,15 +342,25 @@ const ManageBattleEffect: React.FC = () => {
     const effectJsonUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${jsonFileName}`;
 
     try {
-      const response = await axios.get(effectJsonUrl, { headers: { Authorization: `Bearer ${apiToken}` } });
+      const response = await axios.get<{ content: string; sha: string }>(effectJsonUrl, {
+        headers: { Authorization: `Bearer ${apiToken}` },
+      });
       const currentEffects: EffectData[] = JSON.parse(atob(response.data.content));
       const sha = response.data.sha;
-      const updatedEffects = currentEffects.map((effect) => (effect.id === editEffect.id ? updatedEffect : effect));
+      const updatedEffects = currentEffects.map((effect) =>
+        effect.id === editEffect.id ? updatedEffect : effect
+      );
 
       await axios.put(
         effectJsonUrl,
-        { message: `Update ${editType}: ${updatedEffect.name}`, content: btoa(JSON.stringify(updatedEffects, null, 2)), sha },
-        { headers: { Authorization: `Bearer ${apiToken}`, "Content-Type": "application/json" } }
+        {
+          message: `Update ${editType}: ${updatedEffect.name}`,
+          content: btoa(JSON.stringify(updatedEffects, null, 2)),
+          sha,
+        },
+        {
+          headers: { Authorization: `Bearer ${apiToken}`, "Content-Type": "application/json" },
+        }
       );
 
       setEffects((prev) => ({ ...prev, [editType]: updatedEffects }));
@@ -217,14 +368,19 @@ const ManageBattleEffect: React.FC = () => {
       setSuccess(`${editType} updated successfully!`);
       closeModal();
     } catch (err) {
-      const errorMessage = err instanceof AxiosError ? err.message : "Unknown error";
+      const errorMessage =
+        err instanceof AxiosError
+          ? `${err.message} (Status: ${err.response?.status}, Data: ${JSON.stringify(
+              err.response?.data
+            )})`
+          : "Unknown error";
       setError(`Failed to update ${jsonFileName}: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string, type: string) => {
+  const handleDelete = async (id: string, type: string): Promise<void> => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
@@ -232,22 +388,35 @@ const ManageBattleEffect: React.FC = () => {
     const effectJsonUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${jsonFileName}`;
 
     try {
-      const response = await axios.get(effectJsonUrl, { headers: { Authorization: `Bearer ${apiToken}` } });
+      const response = await axios.get<{ content: string; sha: string }>(effectJsonUrl, {
+        headers: { Authorization: `Bearer ${apiToken}` },
+      });
       const currentEffects: EffectData[] = JSON.parse(atob(response.data.content));
       const sha = response.data.sha;
       const updatedEffects = currentEffects.filter((effect) => effect.id !== id);
 
       await axios.put(
         effectJsonUrl,
-        { message: `Delete ${type}: ${id}`, content: btoa(JSON.stringify(updatedEffects, null, 2)), sha },
-        { headers: { Authorization: `Bearer ${apiToken}`, "Content-Type": "application/json" } }
+        {
+          message: `Delete ${type}: ${id}`,
+          content: btoa(JSON.stringify(updatedEffects, null, 2)),
+          sha,
+        },
+        {
+          headers: { Authorization: `Bearer ${apiToken}`, "Content-Type": "application/json" },
+        }
       );
 
       setEffects((prev) => ({ ...prev, [type]: updatedEffects }));
       setFilteredEffects((prev) => ({ ...prev, [type]: updatedEffects }));
       setSuccess(`${type} deleted successfully!`);
     } catch (err) {
-      const errorMessage = err instanceof AxiosError ? err.message : "Unknown error";
+      const errorMessage =
+        err instanceof AxiosError
+          ? `${err.message} (Status: ${err.response?.status}, Data: ${JSON.stringify(
+              err.response?.data
+            )})`
+          : "Unknown error";
       setError(`Failed to delete ${type}: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
@@ -318,6 +487,7 @@ const ManageBattleEffect: React.FC = () => {
                       <h3 className="text-lg font-bold text-blue-300 mb-2">{effect.name}</h3>
                       <div className="flex space-x-2 mt-4">
                         <button
+                          type="button"
                           onClick={() => openEditModal(effect, type)}
                           className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 hover:shadow-[0_0_10px_rgba(59,130,246,0.8)] transition-all duration-300 disabled:opacity-50"
                           disabled={isSubmitting}
@@ -325,6 +495,7 @@ const ManageBattleEffect: React.FC = () => {
                           Edit
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleDelete(effect.id, type)}
                           className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 hover:shadow-[0_0_10px_rgba(239,68,68,0.8)] transition-all duration-300 disabled:opacity-50"
                           disabled={isSubmitting}
@@ -350,7 +521,10 @@ const ManageBattleEffect: React.FC = () => {
             </h2>
             <form onSubmit={handleUpdate} className="space-y-6 relative z-10">
               <div>
-                <label className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]" htmlFor="name">
+                <label
+                  className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
+                  htmlFor="name"
+                >
                   Effect Name
                 </label>
                 <input
@@ -365,7 +539,10 @@ const ManageBattleEffect: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]" htmlFor="img1">
+                <label
+                  className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
+                  htmlFor="img1"
+                >
                   Image 1
                 </label>
                 <input
@@ -376,19 +553,38 @@ const ManageBattleEffect: React.FC = () => {
                   className="block w-full text-blue-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-blue-400 file:text-sm file:font-semibold file:bg-gray-900/50 file:text-blue-300 hover:file:bg-blue-950 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-300 disabled:opacity-50"
                   disabled={isSubmitting}
                 />
-                {img1File && <p className="mt-2 text-sm text-blue-400 truncate">Selected: {img1File.name}</p>}
+                <p className="text-xs text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                  Accepted formats: jpg, jpeg, png, gif. Max size: 100MB
+                </p>
+                {img1File && (
+                  <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                    Selected: {img1File.name}
+                  </p>
+                )}
                 {uploadProgress.img1 > 0 && (
                   <div className="mt-4">
                     <div className="w-full bg-gray-900/50 rounded-full h-2.5 overflow-hidden border border-blue-400/50">
-                      <div className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse" style={{ width: `${uploadProgress.img1}%` }}></div>
+                      <div
+                        className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse"
+                        style={{ width: `${uploadProgress.img1}%` }}
+                      />
                     </div>
-                    <p className="text-sm text-blue-400 mt-1">{uploadProgress.img1}%</p>
+                    <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                      {uploadProgress.img1}%
+                    </p>
                   </div>
                 )}
-                {formData.img1 && <p className="mt-2 text-sm text-blue-400 truncate">Current: {formData.img1}</p>}
+                {formData.img1 && (
+                  <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                    Current: {formData.img1}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]" htmlFor="img2">
+                <label
+                  className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
+                  htmlFor="img2"
+                >
                   Image 2
                 </label>
                 <input
@@ -396,22 +592,41 @@ const ManageBattleEffect: React.FC = () => {
                   type="file"
                   accept="image/*"
                   onChange={(e) => handleFileChange(e, "img2")}
-                  className="block w-full text-blue-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-blue-400 file:text-sm file:font-semibold file:bg-gray-900/50 file:text-blue-300 hover:file:bg-blue-950 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-300 disabled:opacity-50"
+                  className="block w-full text-blue-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-blue-400 file:text-sm file:font-semibold file:bg-gray-900/50 file:text-blue-300 hover:file:bg-blue-950 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.8)] transition-all duration-300 disabled:opacity-50"
                   disabled={isSubmitting}
                 />
-                {img2File && <p className="mt-2 text-sm text-blue-400 truncate">Selected: {img2File.name}</p>}
+                <p className="text-xs text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                  Accepted formats: jpg, jpeg, png, gif. Max size: 100MB
+                </p>
+                {img2File && (
+                  <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                    Selected: {img2File.name}
+                  </p>
+                )}
                 {uploadProgress.img2 > 0 && (
                   <div className="mt-4">
                     <div className="w-full bg-gray-900/50 rounded-full h-2.5 overflow-hidden border border-blue-400/50">
-                      <div className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse" style={{ width: `${uploadProgress.img2}%` }}></div>
+                      <div
+                        className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse"
+                        style={{ width: `${uploadProgress.img2}%` }}
+                      />
                     </div>
-                    <p className="text-sm text-blue-400 mt-1">{uploadProgress.img2}%</p>
+                    <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                      {uploadProgress.img2}%
+                    </p>
                   </div>
                 )}
-                {formData.img2 && <p className="mt-2 text-sm text-blue-400 truncate">Current: {formData.img2}</p>}
+                {formData.img2 && (
+                  <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                    Current: {formData.img2}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]" htmlFor="zip">
+                <label
+                  className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
+                  htmlFor="zip"
+                >
                   Zip File
                 </label>
                 <input
@@ -419,19 +634,35 @@ const ManageBattleEffect: React.FC = () => {
                   type="file"
                   accept=".zip"
                   onChange={(e) => handleFileChange(e, "zip")}
-                  className="block w-full text-blue-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-blue-400 file:text-sm file:font-semibold file:bg-gray-900/50 file:text-blue-300 hover:file:bg-blue-950 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-300 disabled:opacity-50"
+                  className="block w-full text-blue-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-blue-400 file:text-sm file:font-semibold file:bg-gray-900/50 file:text-blue-300 hover:file:bg-blue-950 hover:file:shadow-[0_0_10px_rgba(59,130,246,0.8)] transition-all duration-300 disabled:opacity-50"
                   disabled={isSubmitting}
                 />
-                {zipFile && <p className="mt-2 text-sm text-blue-400 truncate">Selected: {zipFile.name}</p>}
+                <p className="text-xs text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                  Accepted format: zip. Max size: 100MB
+                </p>
+                {zipFile && (
+                  <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                    Selected: {zipFile.name}
+                  </p>
+                )}
                 {uploadProgress.zip > 0 && (
                   <div className="mt-4">
                     <div className="w-full bg-gray-900/50 rounded-full h-2.5 overflow-hidden border border-blue-400/50">
-                      <div className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse" style={{ width: `${uploadProgress.zip}%` }}></div>
+                      <div
+                        className="bg-blue-400 h-2.5 rounded-full transition-all duration-300 animate-neon-pulse"
+                        style={{ width: `${uploadProgress.zip}%` }}
+                      />
                     </div>
-                    <p className="text-sm text-blue-400 mt-1">{uploadProgress.zip}%</p>
+                    <p className="text-sm text-blue-400 mt-1 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                      {uploadProgress.zip}%
+                    </p>
                   </div>
                 )}
-                {formData.url && <p className="mt-2 text-sm text-blue-400 truncate">Current: {formData.url}</p>}
+                {formData.url && (
+                  <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                    Current: {formData.url}
+                  </p>
+                )}
               </div>
               <div className="flex space-x-4">
                 <button
