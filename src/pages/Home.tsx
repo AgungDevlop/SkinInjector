@@ -21,27 +21,27 @@ const Home: React.FC = () => {
     {
       title: "Recall Animation",
       image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcQwynRhGBYW_piueXA82dDlJmr9OjPq14M8SxQa9YvdloHdTGF25CTNqxI0&s=10",
-      route: "/SkinInjector/recall-animation",
+      route: "/recall-animation",
     },
     {
       title: "Spawn Effect",
       image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcQVFd58AqHDakOVhqxBg4OT1qxl16VJ8XiQ7A&usqp=CAU",
-      route: "/SkinInjector/spawn-effect",
+      route: "/spawn-effect",
     },
     {
       title: "Elimination Effect",
       image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcR5xyhh1nGbhJuFdUCskmK_kXdOS-bWDdSsBA&usqp=CAU",
-      route: "/SkinInjector/elimination-effect",
+      route: "/elimination-effect",
     },
     {
       title: "Battle Emote",
       image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcRI74xL8cMMjEpGD1B36wHjjW6VnLP56sAENQ&usqp=CAU",
-      route: "/SkinInjector/battle-emote",
+      route: "/battle-emote",
     },
     {
       title: "Fix Bug",
       image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcSA7l4R0DbVRJgaagYGVy_8iRllPIvE6GqeTA&usqp=CAU",
-      route: "/SkinInjector/fix-bug",
+      route: "/fix-bug",
     },
   ];
 
