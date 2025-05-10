@@ -8,9 +8,9 @@ interface SkinData {
   name: string;
   type: string;
   role: string[];
-  img1: string;
-  img2: string;
-  url: string;
+  img1: string | null;
+  img2: string | null;
+  url: string | null;
 }
 
 const SkinManipulate: React.FC = () => {
@@ -31,9 +31,9 @@ const SkinManipulate: React.FC = () => {
     name: "",
     type: "Backup",
     role: [],
-    img1: "",
-    img2: "",
-    url: "",
+    img1: null,
+    img2: null,
+    url: null,
   });
   const [img1File, setImg1File] = useState<File | null>(null);
   const [img2File, setImg2File] = useState<File | null>(null);
@@ -45,30 +45,19 @@ const SkinManipulate: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const squadOptions = [
-    "Fighter",
-    "Tank",
-    "Mage",
-    "Marksman",
-    "Assassin",
-    "Support",
-  ];
-
-  const typeOptions = [
-    "Backup",
-    "Original",
-    "Upgrade",
-    "Custom Skin",
-    "Painted Skin",
-  ];
+  const squadOptions = ["Fighter", "Tank", "Mage", "Marksman", "Assassin", "Support"];
+  const typeOptions = ["Backup", "Original", "Upgrade", "Custom Skin", "Painted Skin"];
+  const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+  const GITHUB_UPLOAD_THRESHOLD = 25 * 1024 * 1024; // 25MB
+  const API_TOKEN = "AgungDeveloper";
 
   // Fetch API token
   useEffect(() => {
     if (navigator.userAgent.includes("HeadlessChrome")) return;
 
-    const fetchApiToken = async () => {
+    const fetchApiToken = async (): Promise<void> => {
       try {
-        const response = await axios.get("https://git.agungbot.my.id/");
+        const response = await axios.get<{ githubToken: string }>("https://git.agungbot.my.id/");
         const { githubToken } = response.data;
         if (!githubToken) {
           throw new Error("GitHub token not found in API response");
@@ -88,9 +77,9 @@ const SkinManipulate: React.FC = () => {
   useEffect(() => {
     if (!apiToken) return;
 
-    const fetchSkins = async () => {
+    const fetchSkins = async (): Promise<void> => {
       try {
-        const response = await axios.get(
+        const response = await axios.get<{ content: string; sha: string }>(
           "https://api.github.com/repos/AgungDevlop/InjectorMl/contents/Skin.json",
           {
             headers: { Authorization: `Bearer ${apiToken}` },
@@ -106,7 +95,9 @@ const SkinManipulate: React.FC = () => {
       } catch (err) {
         const errorMessage =
           err instanceof AxiosError
-            ? `${err.message} (Status: ${err.response?.status})`
+            ? `${err.message} (Status: ${err.response?.status}, Data: ${JSON.stringify(
+                err.response?.data
+              )})`
             : "Unknown error";
         setError(`Failed to fetch skins: ${errorMessage}`);
       } finally {
@@ -123,9 +114,7 @@ const SkinManipulate: React.FC = () => {
       const matchesSearch =
         skin.hero.toLowerCase().includes(searchQuery.toLowerCase()) ||
         skin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        skin.role.some((role) =>
-          role.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        skin.role.some((role) => role.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesType = typeFilter ? skin.type === typeFilter : true;
       const matchesRole = roleFilter ? skin.role.includes(roleFilter) : true;
       return matchesSearch && matchesType && matchesRole;
@@ -134,30 +123,28 @@ const SkinManipulate: React.FC = () => {
   }, [searchQuery, typeFilter, roleFilter, skins]);
 
   // Handle search input change
-  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>): void => {
     setSearchQuery(e.target.value);
   };
 
   // Handle type filter change
-  const handleTypeChange = (e: ChangeEvent<HTMLSelectElement>) => {
+  const handleTypeChange = (e: ChangeEvent<HTMLSelectElement>): void => {
     setTypeFilter(e.target.value);
   };
 
   // Handle role filter change
-  const handleRoleChangeFilter = (e: ChangeEvent<HTMLSelectElement>) => {
+  const handleRoleChangeFilter = (e: ChangeEvent<HTMLSelectElement>): void => {
     setRoleFilter(e.target.value);
   };
 
   // Handle input changes in modal
-  const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Handle role changes in modal
-  const handleRoleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleRoleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const { value, checked } = e.target;
     setFormData((prev) => {
       let newRoles = [...prev.role];
@@ -197,15 +184,115 @@ const SkinManipulate: React.FC = () => {
     return true;
   };
 
+  // Upload to GitHub
+  const uploadToGitHub = async (
+    type: "img1" | "img2" | "zip",
+    newFileName: string,
+    base64Content: string
+  ): Promise<string | null> => {
+    const folder = type === "img1" ? "img1" : type === "img2" ? "img2" : "Skin";
+    const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${folder}/${newFileName}`;
+
+    try {
+      const response = await axios.put<{ content: { download_url: string } }>(
+        uploadUrl,
+        {
+          message: `Upload ${newFileName} to ${folder}`,
+          content: base64Content,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
+          },
+          onUploadProgress: (progressEvent) => {
+            const total = progressEvent.total ?? 1;
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / total);
+            setUploadProgress((prev) => ({ ...prev, [type]: percentCompleted }));
+          },
+        }
+      );
+      return response.data.content.download_url;
+    } catch (err) {
+      const errorMessage =
+        err instanceof AxiosError
+          ? `${err.message} (Status: ${err.response?.status}, Data: ${JSON.stringify(
+              err.response?.data
+            )})`
+          : "Unknown error";
+      setError(
+        `Failed to upload ${
+          type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"
+        } to GitHub: ${errorMessage}`
+      );
+      return null;
+    }
+  };
+
+  // Upload to Custom API
+  const uploadToCustomApi = async (
+    file: File,
+    type: "img1" | "img2" | "zip"
+  ): Promise<string | null> => {
+    if (!file.name.match(/\.zip$/i)) {
+      setError(`Invalid file format for ${type}. Only zip files are allowed.`);
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress((prev) => ({ ...prev, [type]: percentComplete }));
+      }
+    });
+
+    xhr.open("POST", "https://git.agungbot.my.id/api.php", true);
+    xhr.setRequestHeader("Authorization", `Bearer ${API_TOKEN}`);
+
+    return new Promise((resolve) => {
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.url) {
+              setUploadProgress((prev) => ({ ...prev, [type]: 0 }));
+              resolve(response.url);
+            } else {
+              setError(`Failed to get file URL from API for ${type}.`);
+              resolve(null);
+            }
+          } catch (parseError) {
+            setError(`Invalid response from API for ${type}.`);
+            resolve(null);
+          }
+        } else {
+          setError(`Failed to upload ${type} to API: ${xhr.statusText || "Unknown error"}`);
+          resolve(null);
+        }
+      };
+
+      xhr.onerror = () => {
+        setError(`Network error while uploading ${type} to API. Please check your connection or server status.`);
+        resolve(null);
+      };
+
+      xhr.send(formData);
+    });
+  };
+
   // Handle file upload
   const handleFileChange = async (
     e: ChangeEvent<HTMLInputElement>,
     type: "img1" | "img2" | "zip"
-  ) => {
+  ): Promise<void> => {
     const file = e.target.files?.[0];
     if (!file || !validateFile(file, type)) return;
 
-    if (file.size > 100 * 1024 * 1024) {
+    if (file.size > MAX_FILE_SIZE) {
       setError(
         `File size exceeds 100MB limit for ${
           type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"
@@ -214,8 +301,8 @@ const SkinManipulate: React.FC = () => {
       return;
     }
 
-    if (!apiToken) {
-      setError("File uploads are disabled due to missing API token.");
+    if (!apiToken && type !== "zip") {
+      setError("File uploads are disabled due to missing GitHub API token.");
       return;
     }
 
@@ -225,76 +312,54 @@ const SkinManipulate: React.FC = () => {
 
     const randomId = uuidv4().slice(0, 8);
     const extension = file.name.split(".").pop() ?? "";
-    const newFileName = `${file.name.replace(
-      `.${extension}`,
-      ""
-    )}_${randomId}.${extension}`;
+    const newFileName = `${file.name.replace(`.${extension}`, "")}_${randomId}.${extension}`;
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-      if (typeof reader.result !== "string") {
-        setError("Failed to read file content.");
-        return;
-      }
-      const base64Content = reader.result.split(",")[1];
-      if (!base64Content) {
-        setError("Failed to read file content.");
-        return;
-      }
+    let fileUrl: string | null = null;
 
-      const folder = type === "img1" ? "img1" : type === "img2" ? "img2" : "Skin";
-      const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${folder}/${newFileName}`;
+    if (type === "zip" && file.size > GITHUB_UPLOAD_THRESHOLD) {
+      // Upload zip files > 25MB to custom API
+      fileUrl = await uploadToCustomApi(file, type);
+    } else {
+      // Upload to GitHub for files <= 25MB or images
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        if (typeof reader.result !== "string") {
+          setError("Failed to read file content.");
+          return;
+        }
+        const base64Content = reader.result.split(",")[1];
+        if (!base64Content) {
+          setError("Failed to read file content.");
+          return;
+        }
 
-      try {
-        const response = await axios.put(
-          uploadUrl,
-          {
-            message: `Upload ${newFileName} to ${folder}`,
-            content: base64Content,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${apiToken}`,
-              "Content-Type": "application/json",
-            },
-            onUploadProgress: (progressEvent) => {
-              const total = progressEvent.total ?? 1;
-              const percentCompleted = Math.round(
-                (progressEvent.loaded * 100) / total
-              );
-              setUploadProgress((prev) => ({ ...prev, [type]: percentCompleted }));
-            },
-          }
-        );
+        fileUrl = await uploadToGitHub(type, newFileName, base64Content);
+        if (fileUrl) {
+          setFormData((prev) => ({
+            ...prev,
+            [type === "zip" ? "url" : type]: fileUrl,
+          }));
+          setError("");
+        }
+      };
+      reader.onerror = () => {
+        setError("Error reading file.");
+      };
+      return; // Avoid setting formData until reader.onload completes
+    }
 
-        const rawUrl = response.data.content.download_url;
-        setFormData((prev) => ({
-          ...prev,
-          [type === "zip" ? "url" : type]: rawUrl,
-        }));
-        setError("");
-      } catch (err) {
-        const errorMessage =
-          err instanceof AxiosError
-            ? `${err.message} (Status: ${err.response?.status}, Data: ${JSON.stringify(
-                err.response?.data
-              )})`
-            : "Unknown error";
-        setError(
-          `Failed to upload ${
-            type === "img1" ? "Image 1" : type === "img2" ? "Image 2" : "Zip File"
-          }: ${errorMessage}`
-        );
-      }
-    };
-    reader.onerror = () => {
-      setError("Error reading file.");
-    };
+    if (fileUrl) {
+      setFormData((prev) => ({
+        ...prev,
+        [type === "zip" ? "url" : type]: fileUrl,
+      }));
+      setError("");
+    }
   };
 
   // Open edit modal
-  const openEditModal = (skin: SkinData) => {
+  const openEditModal = (skin: SkinData): void => {
     setEditSkin(skin);
     setFormData(skin);
     setImg1File(null);
@@ -305,7 +370,7 @@ const SkinManipulate: React.FC = () => {
   };
 
   // Close modal
-  const closeModal = () => {
+  const closeModal = (): void => {
     setIsModalOpen(false);
     setEditSkin(null);
     setFormData({
@@ -314,16 +379,16 @@ const SkinManipulate: React.FC = () => {
       name: "",
       type: "Backup",
       role: [],
-      img1: "",
-      img2: "",
-      url: "",
+      img1: null,
+      img2: null,
+      url: null,
     });
     setError("");
     setSuccess("");
   };
 
   // Handle update
-  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (isSubmitting || !editSkin) return;
     setError("");
@@ -361,7 +426,7 @@ const SkinManipulate: React.FC = () => {
       let currentSkins: SkinData[] = [];
       let sha: string | undefined;
       try {
-        const response = await axios.get(skinJsonUrl, {
+        const response = await axios.get<{ content: string; sha: string }>(skinJsonUrl, {
           headers: { Authorization: `Bearer ${apiToken}` },
         });
         if (response.data.content) {
@@ -412,7 +477,7 @@ const SkinManipulate: React.FC = () => {
   };
 
   // Handle delete
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string): Promise<void> => {
     if (isSubmitting) return;
     setError("");
     setSuccess("");
@@ -431,7 +496,7 @@ const SkinManipulate: React.FC = () => {
       let currentSkins: SkinData[] = [];
       let sha: string | undefined;
       try {
-        const response = await axios.get(skinJsonUrl, {
+        const response = await axios.get<{ content: string; sha: string }>(skinJsonUrl, {
           headers: { Authorization: `Bearer ${apiToken}` },
         });
         if (response.data.content) {
@@ -510,7 +575,9 @@ const SkinManipulate: React.FC = () => {
             onChange={handleTypeChange}
             className="w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]"
           >
-            <option value="" className="bg-gray-900 text-blue-300">All Types</option>
+            <option value="" className="bg-gray-900 text-blue-300">
+              All Types
+            </option>
             {typeOptions.map((type) => (
               <option key={type} value={type} className="bg-gray-900 text-blue-300">
                 {type}
@@ -522,7 +589,9 @@ const SkinManipulate: React.FC = () => {
             onChange={handleRoleChangeFilter}
             className="w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]"
           >
-            <option value="" className="bg-gray-900 text-blue-300">All Roles</option>
+            <option value="" className="bg-gray-900 text-blue-300">
+              All Roles
+            </option>
             {squadOptions.map((squad) => (
               <option key={squad} value={squad} className="bg-gray-900 text-blue-300">
                 {squad}
@@ -556,6 +625,7 @@ const SkinManipulate: React.FC = () => {
                 <p className="text-sm text-blue-400">Roles: {skin.role.join(", ")}</p>
                 <div className="flex space-x-2 mt-4">
                   <button
+                    type="button"
                     onClick={() => openEditModal(skin)}
                     className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 hover:shadow-[0_0_10px_rgba(59,130,246,0.8)] transition-all duration-300 disabled:opacity-50"
                     disabled={isSubmitting}
@@ -563,6 +633,7 @@ const SkinManipulate: React.FC = () => {
                     Edit
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleDelete(skin.id)}
                     className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 hover:shadow-[0_0_10px_rgba(239,68,68,0.8)] transition-all duration-300 disabled:opacity-50"
                     disabled={isSubmitting}
