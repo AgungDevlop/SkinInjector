@@ -1,7 +1,22 @@
-import { FaGamepad, FaTiktok } from 'react-icons/fa';
+import { FaGamepad, FaTiktok, FaHome, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleForward = () => {
+    navigate(1);
+  };
+
+  const handleHome = () => {
+    navigate('/');
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 via-blue-950 to-purple-950 relative overflow-hidden">
       {/* Animated Background Effect */}
@@ -28,9 +43,31 @@ const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 text-white pt-20 relative z-10">
+      <main className="flex-1 text-white pt-20 pb-16 relative z-10">
         {children}
       </main>
+
+      {/* Navigation Footer */}
+      <footer className="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 backdrop-blur-md shadow-lg border-t-2 border-blue-400 z-50 flex justify-around items-center">
+        <button
+          onClick={handleBack}
+          className="text-blue-300 hover:text-blue-200 transition-colors duration-300"
+        >
+          <FaArrowLeft className="text-2xl" />
+        </button>
+        <button
+          onClick={handleHome}
+          className="text-blue-300 hover:text-blue-200 transition-colors duration-300"
+        >
+          <FaHome className="text-2xl" />
+        </button>
+        <button
+          onClick={handleForward}
+          className="text-blue-300 hover:text-blue-200 transition-colors duration-300"
+        >
+          <FaArrowRight className="text-2xl" />
+        </button>
+      </footer>
     </div>
   );
 };
