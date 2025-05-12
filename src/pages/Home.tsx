@@ -41,7 +41,7 @@ const Home: React.FC = () => {
     {
       title: "Fix Bug",
       image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcSA7l4R0DbVRJgaagYGVy_8iRllPIvE6GqeTA&usqp=CAU",
-      route: "/fix-bug",
+      route: "custom://fixBug",
     },
   ];
 
