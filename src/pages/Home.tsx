@@ -15,32 +15,32 @@ const Home: React.FC = () => {
   const cards: Card[] = [
     {
       title: "Unlock Skin",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcQULKxdP7uXsWMptLAosgCv47Zc3MAkSX4eZlhjfSjlch9DJ1r5MxvRA&s=10",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQULKxdP7uXsWMptLAosgCv47Zc3MAkSX4eZlhfjfSjlch9DJ1r5MxvRA&s=10",
       route: "unlock-skin",
     },
     {
       title: "Recall Animation",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcQwynRhGBYW_piueXA82dDlJmr9OjPq14M8SxQa9YvdloHdTGF25CTNqxI0&s=10",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwynRhGBYW_piueXA82dDlJmr9OjPq14M8SxQa9YvdloHdTGF25CTNqxI0&s=10",
       route: "/recall-animation",
     },
     {
       title: "Spawn Effect",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcQVFd58AqHDakOVhqxBg4OT1qxl16VJ8XiQ7A&usqp=CAU",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVFd58AqHDakOVhqxBg4OT1qxl16VJ8XiQ7A&usqp=CAU",
       route: "/spawn-effect",
     },
     {
       title: "Elimination Effect",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcR5xyhh1nGbhJuFdUCskmK_kXdOS-bWDdSsBA&usqp=CAU",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5xyhh1nGbhJuFdUCskmK_kXdOS-bWDdSsBA&usqp=CAU",
       route: "/elimination-effect",
     },
     {
       title: "Battle Emote",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcRI74xL8cMMjEpGD1B36wHjjW6VnLP56sAENQ&usqp=CAU",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRI74xL8cMMjEpGD1B36wHjjW6VnLP56sAENQ&usqp=CAU",
       route: "/battle-emote",
     },
     {
       title: "Fix Bug",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbni:ANd9GcSA7l4R0DbVRJgaagYGVy_8iRllPIvE6GqeTA&usqp=CAU",
+      image: "https://cdn-icons-png.flaticon.com/512/4677/4677647.png",
       route: "custom://fixBug",
     },
   ];
