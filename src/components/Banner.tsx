@@ -7,7 +7,7 @@ const Banner: React.FC = () => {
         <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-xl animate-neon-pulse pointer-events-none"></div>
         <div className="relative z-10 p-4 sm:p-6 md:p-8 text-center">
           <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2yOwePQyaFz83qZ2kL2X1qO3uX2kJ6f3t2A&usqp=CAU"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVIYNo4f76H8-IkNCzc3rH-6rYWIU35eCkfg&s"
             alt="Banner"
             className="w-full h-32 sm:h-40 md:h-48 object-cover rounded-md mb-3 sm:mb-4"
             loading="lazy"
