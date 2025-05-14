@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import SplashAnimation from "../components/SplashAnimation";
+import Banner from "../components/Banner";
 
 interface Card {
   title: string;
@@ -9,7 +10,7 @@ interface Card {
 }
 
 const Home: React.FC = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(!sessionStorage.getItem("hasSeenSplash"));
   const [isLoading, setIsLoading] = useState<boolean[]>(new Array(6).fill(true));
 
   const cards: Card[] = [
@@ -61,12 +62,18 @@ const Home: React.FC = () => {
     };
   }, [cards]);
 
+  const handleAnimationComplete = () => {
+    setShowSplash(false);
+    sessionStorage.setItem("hasSeenSplash", "true");
+  };
+
   return (
     <>
       <div className="relative">
-        {showSplash && <SplashAnimation onAnimationComplete={() => setShowSplash(false)} />}
+        {showSplash && <SplashAnimation onAnimationComplete={handleAnimationComplete} />}
 
         <div className="container mx-auto p-2 sm:p-3 text-white">
+          <Banner />
           <h1 className="text-3xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-4 sm:mb-6 md:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)]">
             Skin Tools ML Features
           </h1>
