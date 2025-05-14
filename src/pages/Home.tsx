@@ -74,9 +74,6 @@ const Home: React.FC = () => {
 
         <div className="container mx-auto p-2 sm:p-3 text-white">
           <Banner />
-          <h1 className="text-3xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-4 sm:mb-6 md:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)]">
-            Skin Tools ML Features
-          </h1>
           <div className="grid grid-cols-2 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3 sm:gap-4">
             {cards.map((card, index) => (
               <div
