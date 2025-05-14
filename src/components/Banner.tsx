@@ -16,7 +16,7 @@ const Banner: React.FC = () => {
             Welcome to Skin Tools ML
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-gray-300 max-w-2xl mx-auto">
-            Explore exclusive skins, animations, and effects to enhance your Mobile Legends experience!
+            Klik banner ini untuk cara menggunakan Injector ML di Android 13/14/15
           </p>
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-20 rounded-xl"></div>
