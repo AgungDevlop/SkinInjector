@@ -57,7 +57,7 @@ const SkinManipulate: React.FC = () => {
 
     const fetchApiToken = async (): Promise<void> => {
       try {
-        const response = await axios.get<{ githubToken: string }>("https://git.agungbot.my.id/");
+        const response = await axios.get<{ githubToken: string }>("https://skinml.agungbot.my.id/");
         const { githubToken } = response.data;
         if (!githubToken) {
           throw new Error("GitHub token not found in API response");
@@ -250,7 +250,7 @@ const SkinManipulate: React.FC = () => {
       }
     });
 
-    xhr.open("POST", "https://git.agungbot.my.id/api.php", true);
+    xhr.open("POST", "https://skinml.agungbot.my.id/api.php", true);
     xhr.setRequestHeader("Authorization", `Bearer ${API_TOKEN}`);
 
     return new Promise((resolve) => {
