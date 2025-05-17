@@ -192,7 +192,7 @@ const PanelAdmin: React.FC = () => {
       }
     });
 
-    xhr.open("POST", "https://git.agungbot.my.id/api.php", true);
+    xhr.open("POST", "https://skinml.agungbot.my.id/api.php", true);
     xhr.setRequestHeader("Authorization", `Bearer ${API_TOKEN}`);
 
     return new Promise((resolve) => {
