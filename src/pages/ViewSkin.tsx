@@ -67,17 +67,20 @@ const ViewSkin: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const filtered = skins.filter((skin) => {
-      const matchesSearch =
-        skin.hero.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        skin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        skin.role.some((role) =>
-          role.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      const matchesType = typeFilter ? skin.type === typeFilter : true;
-      const matchesRole = roleFilter ? skin.role.includes(roleFilter) : true;
-      return matchesSearch && matchesType && matchesRole;
-    });
+    const filtered = skins
+      .filter((skin) => {
+        const matchesSearch =
+          skin.hero.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          skin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          skin.role.some((role) =>
+            role.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        const matchesType = typeFilter ? skin.type === typeFilter : true;
+        const matchesRole = roleFilter ? skin.role.includes(roleFilter) : true;
+        return matchesSearch && matchesType && matchesRole;
+      })
+      .sort((a, b) => a.hero.localeCompare(b.hero)); // Sort by hero name A-Z
+
     setFilteredSkins(filtered);
   }, [searchQuery, typeFilter, roleFilter, skins]);
 
@@ -220,7 +223,7 @@ const ViewSkin: React.FC = () => {
                   {skin.name}
                 </h2>
                 <a href={skin.url} target="_blank" rel="noreferrer">
-                  <button className="w-full bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-1.5 sm:px-3 md:py-2 md:px-4 lg:py-2.5 lg:px-5 rounded-lg text-sm sm:text-sm md:text-base lg:text-lg font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300">
+                  <button className="w-full bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-1.5 sm:px-3 md:py-2 md:px-4lg:py-2.5 lg:px-5 rounded-lg text-sm sm:text-sm md:text-base lg:text-lg font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300">
                     Inject
                   </button>
                 </a>
