@@ -16,7 +16,6 @@ const ViewRecall: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-  const [imageStatus, setImageStatus] = useState<{ [key: string]: "loading" | "loaded" | "error" }>({});
 
   useEffect(() => {
     const fetchRecalls = async () => {
@@ -30,13 +29,6 @@ const ViewRecall: React.FC = () => {
         }
         setRecalls(recallsData);
         setFilteredRecalls(recallsData);
-        // Initialize image status for each recall
-        const initialStatus: { [key: string]: "loading" | "loaded" | "error" } = {};
-        recallsData.forEach((recall: RecallData) => {
-          initialStatus[`${recall.id}-img1`] = "loading";
-          initialStatus[`${recall.id}-img2`] = "loading";
-        });
-        setImageStatus(initialStatus);
       } catch (err) {
         const errorMessage =
           err instanceof AxiosError
@@ -62,14 +54,6 @@ const ViewRecall: React.FC = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-  };
-
-  const handleImageLoad = (id: string, imgType: string) => {
-    setImageStatus((prev) => ({ ...prev, [`${id}-${imgType}`]: "loaded" }));
-  };
-
-  const handleImageError = (id: string, imgType: string) => {
-    setImageStatus((prev) => ({ ...prev, [`${id}-${imgType}`]: "error" }));
   };
 
   return (
@@ -119,49 +103,19 @@ const ViewRecall: React.FC = () => {
               <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none animate-neon-pulse pointer-events-none"></div>
               <div className="relative z-10 pt-6 sm:pt-6 lg:pt-7 p-3 sm:p-3 lg:p-4">
                 <div className="flex items-center justify-center mb-2 sm:mb-2 lg:mb-3">
-                  {imageStatus[`${recall.id}-img1`] === "loading" ? (
-                    <div className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 flex items-center justify-center bg-gray-700 rounded-full">
-                      <div className="w-6 h-6 relative animate-ios-spinner">
-                        <div className="absolute inset-0 rounded-full border-t-2 border-gray-400 opacity-20"></div>
-                        <div className="absolute inset-0 rounded-full border-t-2 border-gray-400 animate-spin"></div>
-                      </div>
-                    </div>
-                  ) : imageStatus[`${recall.id}-img1`] === "error" ? (
-                    <div className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 flex items-center justify-center bg-gray-700 rounded-full text-red-300 text-xs">
-                      Failed
-                    </div>
-                  ) : (
-                    <img
-                      src={recall.img1}
-                      alt={`${recall.name} img1`}
-                      className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
-                      loading="lazy"
-                      onLoad={() => handleImageLoad(recall.id, "img1")}
-                      onError={() => handleImageError(recall.id, "img1")}
-                    />
-                  )}
+                  <img
+                    src={recall.img1}
+                    alt={`${recall.name} img1`}
+                    className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
+                    loading="lazy"
+                  />
                   <FaArrowRight className="text-blue-300 mx-2 text-xl sm:text-xl md:text-2xl lg:text-3xl animate-neon-pulse" />
-                  {imageStatus[`${recall.id}-img2`] === "loading" ? (
-                    <div className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 flex items-center justify-center bg-gray-700 rounded-full">
-                      <div className="w-6 h-6 relative animate-ios-spinner">
-                        <div className="absolute inset-0 rounded-full border-t-2 border-gray-400 opacity-20"></div>
-                        <div className="absolute inset-0 rounded-full border-t-2 border-gray-400 animate-spin"></div>
-                      </div>
-                    </div>
-                  ) : imageStatus[`${recall.id}-img2`] === "error" ? (
-                    <div className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 flex items-center justify-center bg-gray-700 rounded-full text-red-300 text-xs">
-                      Failed
-                    </div>
-                  ) : (
-                    <img
-                      src={recall.img2}
-                      alt={`${recall.name} img2`}
-                      className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
-                      loading="lazy"
-                      onLoad={() => handleImageLoad(recall.id, "img2")}
-                      onError={() => handleImageError(recall.id, "img2")}
-                    />
-                  )}
+                  <img
+                    src={recall.img2}
+                    alt={`${recall.name} img2`}
+                    className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
+                    loading="lazy"
+                  />
                 </div>
                 <h2 className="text-center font-bold text-sm sm:text-sm md:text-base lg:text-lg text-blue-300 mb-2 sm:mb-2 lg:mb-3 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
                   {recall.name}
