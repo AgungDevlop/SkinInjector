@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
 import { FaArrowRight } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 interface HeroData {
   her: string;
@@ -75,8 +76,6 @@ const ViewHero: React.FC = () => {
   const handleViewClick = (heroName: string) => {
     // Save the hero name to sessionStorage for use in ViewSkin
     sessionStorage.setItem("selectedHero", heroName);
-    // Optionally, redirect to ViewSkin page
-    window.location.href = "/unlock-skin";
   };
 
   return (
@@ -163,12 +162,13 @@ const ViewHero: React.FC = () => {
                 <h2 className="text-center font-bold text-sm sm:text-sm md:text-base lg:text-lg text-blue-300 mb-2 sm:mb-2 lg:mb-3 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
                   {hero.her}
                 </h2>
-                <button
+                <Link
+                  to="/unlock-skin"
                   onClick={() => handleViewClick(hero.her)}
-                  className="w-full bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-1.5 sm:px-3 md:py-2 md:px-4 lg:py-2.5 lg:px-5 rounded-lg text-sm sm:text-sm md:text-base lg:text-lg font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-1.5 sm:px-3 md:py-2 md:px-4 lg:py-2.5 lg:px-5 rounded-lg text-sm sm:text-sm md:text-base lg:text-lg font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300 block text-center"
                 >
                   View
-                </button>
+                </Link>
               </div>
             </div>
           ))}
