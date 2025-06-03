@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react"; // Removed useEffect import as it's not needed
 import SplashAnimation from "../components/SplashAnimation";
 import Banner from "../components/Banner";
 
@@ -110,7 +110,7 @@ const Home: React.FC = () => {
           </style>
           <Banner />
           <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3 sm:gap-4">
-            {cards.map((card, index) => (
+            {cards.map((card) => ( // Removed unused 'index' parameter
               <div
                 key={card.title}
                 className="relative bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(59,130,246,0.7)] hover:animate-glitch"
