@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios, { AxiosError } from "axios";
 
 interface SkinData {
@@ -19,6 +19,7 @@ const ViewSkin: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [selectedHero, setSelectedHero] = useState<string | null>(null);
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map()); // Track timeouts per image
 
   useEffect(() => {
     // Get the selected hero from sessionStorage
@@ -36,6 +37,27 @@ const ViewSkin: React.FC = () => {
         }
         setSkins(skinsData);
         setFilteredSkins(skinsData);
+
+        // Preload images after fetching skins
+        skinsData.forEach((skin: SkinData) => {
+          const img = new Image();
+          const imageUrl = getImageUrl(skin.img2);
+          img.src = imageUrl;
+          img.onload = () => {
+            setLoadedImages((prev) => new Set(prev).add(skin.id));
+            clearTimeout(timeoutRefs.current.get(skin.id)); // Clear timeout on load
+          };
+          img.onerror = () => {
+            setLoadedImages((prev) => new Set(prev).add(skin.id)); // Mark as loaded on error
+            clearTimeout(timeoutRefs.current.get(skin.id)); // Clear timeout on error
+          };
+
+          // Set fallback timeout
+          const timeout = setTimeout(() => {
+            setLoadedImages((prev) => new Set(prev).add(skin.id));
+          }, 5000);
+          timeoutRefs.current.set(skin.id, timeout);
+        });
       } catch (err) {
         const errorMessage =
           err instanceof AxiosError
@@ -48,6 +70,12 @@ const ViewSkin: React.FC = () => {
     };
 
     fetchSkins();
+
+    // Cleanup timeouts on unmount
+    return () => {
+      timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
+      timeoutRefs.current.clear();
+    };
   }, []);
 
   useEffect(() => {
@@ -78,18 +106,6 @@ const ViewSkin: React.FC = () => {
       // Fallback to a placeholder if URL processing fails
       return "https://via.placeholder.com/50?text=Skin";
     }
-  };
-
-  // Handle image load or error
-  const handleImageLoad = (skinId: string) => {
-    setLoadedImages((prev) => new Set(prev).add(skinId));
-  };
-
-  // Fallback timeout to ensure spinner doesn't persist indefinitely
-  const setImageTimeout = (skinId: string) => {
-    setTimeout(() => {
-      setLoadedImages((prev) => new Set(prev).add(skinId));
-    }, 5000); // 5 seconds fallback
   };
 
   return (
@@ -176,12 +192,6 @@ const ViewSkin: React.FC = () => {
                   alt={`${skin.name} image`}
                   className={`w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse ${loadedImages.has(skin.id) ? '' : 'hidden'}`}
                   loading="lazy"
-                  onLoad={() => handleImageLoad(skin.id)}
-                  onError={(e) => {
-                    e.currentTarget.src = "https://via.placeholder.com/50?text=Skin";
-                    handleImageLoad(skin.id); // Mark as loaded to hide spinner
-                  }}
-                  onLoadStart={() => setImageTimeout(skin.id)} // Set timeout on load start
                 />
                 <h2 className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl text-blue-300 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
                   {skin.type === "Backup" ? `Remove ${skin.name}` : skin.name}
