@@ -11,7 +11,7 @@ interface Card {
 
 const Home: React.FC = () => {
   const [showSplash, setShowSplash] = useState(!sessionStorage.getItem("hasSeenSplash"));
-  const [isLoading, setIsLoading] = useState<boolean[]>(new Array(6).fill(true));
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   const cards: Card[] = [
     {
@@ -46,21 +46,17 @@ const Home: React.FC = () => {
     },
   ];
 
-  useEffect(() => {
-    const loadingTimers = cards.map((_, index) =>
-      setTimeout(() => {
-        setIsLoading((prev) => {
-          const newLoading = [...prev];
-          newLoading[index] = false;
-          return newLoading;
-        });
-      }, 3000)
-    );
+  // Handle image load or error
+  const handleImageLoad = (title: string) => {
+    setLoadedImages((prev) => new Set(prev).add(title));
+  };
 
-    return () => {
-      loadingTimers.forEach(clearTimeout);
-    };
-  }, [cards]);
+  // Fallback timeout to ensure spinner doesn't persist indefinitely
+  const setImageTimeout = (title: string) => {
+    setTimeout(() => {
+      setLoadedImages((prev) => new Set(prev).add(title));
+    }, 5000); // 5 seconds fallback
+  };
 
   const handleAnimationComplete = () => {
     setShowSplash(false);
@@ -71,10 +67,49 @@ const Home: React.FC = () => {
     <>
       <div className="relative">
         {showSplash && <SplashAnimation onAnimationComplete={handleAnimationComplete} />}
-
         <div className="container mx-auto p-2 sm:p-3 text-white">
+          <style>
+            {`
+              @keyframes pulse-ring {
+                0% { transform: scale(0.33); opacity: 1; }
+                80%, 100% { opacity: 0; }
+              }
+              @keyframes pulse-dot {
+                0% { transform: scale(0.8); }
+                50% { transform: scale(1); }
+                100% { transform: scale(0.8); }
+              }
+              .custom-spinner {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .custom-spinner::before {
+                content: '';
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                border: 4px solid transparent;
+                border-top-color: #3b82f6;
+                animation: pulse-ring 1.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+                position: absolute;
+              }
+              .custom-spinner::after {
+                content: '';
+                width: 50%;
+                height: 50%;
+                background: #3b82f6;
+                border-radius: 50%;
+                animation: pulse-dot 1.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+                position: absolute;
+              }
+            `}
+          </style>
           <Banner />
-          <div className="grid grid-cols-2 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3 sm:gap-4">
             {cards.map((card, index) => (
               <div
                 key={card.title}
@@ -83,22 +118,23 @@ const Home: React.FC = () => {
                 <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none animate-neon-pulse pointer-events-none"></div>
                 <div className="relative z-10 p-3 sm:p-3 lg:p-4">
                   <div className="relative">
-                    {isLoading[index] && (
+                    {!loadedImages.has(card.title) && (
                       <div className="w-full h-20 sm:h-20 md:h-24 lg:h-28 flex items-center justify-center bg-gray-800 rounded-md">
-                        <div className="w-6 h-6 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 relative animate-ios-spinner">
-                          <div className="absolute inset-0 rounded-full border-t-2 border-gray-400 opacity-20"></div>
-                          <div className="absolute inset-0 rounded-full border-t-2 border-gray-400 animate-spin"></div>
-                        </div>
+                        <div className="custom-spinner w-8 h-8 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12"></div>
                       </div>
                     )}
-                    {!isLoading[index] && (
-                      <img
-                        src={card.image}
-                        alt={card.title}
-                        className="w-full h-20 sm:h-20 md:h-24 lg:h-28 object-cover rounded-md mb-3 sm:mb-3 lg:mb-4"
-                        loading="lazy"
-                      />
-                    )}
+                    <img
+                      src={card.image}
+                      alt={card.title}
+                      className={`w-full h-20 sm:h-20 md:h-24 lg:h-28 object-cover rounded-md mb-3 sm:mb-3 lg:mb-4 ${loadedImages.has(card.title) ? '' : 'hidden'}`}
+                      loading="lazy"
+                      onLoad={() => handleImageLoad(card.title)}
+                      onError={(e) => {
+                        e.currentTarget.src = "https://via.placeholder.com/150?text=Image";
+                        handleImageLoad(card.title); // Mark as loaded to hide spinner
+                      }}
+                      onLoadStart={() => setImageTimeout(card.title)} // Set timeout on load start
+                    />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-30 rounded-md"></div>
                   </div>
                   <h2 className="text-center font-bold text-sm sm:text-sm md:text-base lg:text-lg text-blue-300 mb-3 sm:mb-3 lg:mb-4 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
