@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import SplashAnimation from "../components/SplashAnimation";
 import Banner from "../components/Banner";
 
@@ -12,6 +12,7 @@ interface Card {
 const Home: React.FC = () => {
   const [showSplash, setShowSplash] = useState(!sessionStorage.getItem("hasSeenSplash"));
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  const location = useLocation(); // Hook to track route changes
 
   const cards: Card[] = [
     {
@@ -45,6 +46,11 @@ const Home: React.FC = () => {
       route: "custom://fixBug",
     },
   ];
+
+  // Reset loadedImages on route change
+  useEffect(() => {
+    setLoadedImages(new Set()); // Clear loaded images when location changes
+  }, [location]);
 
   // Handle image load or error
   const handleImageLoad = (title: string) => {
@@ -130,7 +136,7 @@ const Home: React.FC = () => {
                       </div>
                     )}
                     <img
-                      src={card.image}
+                      src={`${card.image}?t=${new Date().getTime()}`} // Add timestamp to force image reload
                       alt={card.title}
                       className={`w-full h-20 sm:h-20 md:h-24 lg:h-28 object-cover rounded-md mb-3 sm:mb-3 lg:mb-4 ${loadedImages.has(card.title) ? '' : 'hidden'}`}
                       loading="lazy"
