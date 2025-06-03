@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios, { AxiosError } from "axios";
 import { Link } from "react-router-dom";
 
@@ -16,6 +16,7 @@ const ViewHero: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map()); // Track timeouts per image
 
   const roleOptions = [
     "Fighter",
@@ -38,6 +39,27 @@ const ViewHero: React.FC = () => {
         }
         setHeroes(heroesData);
         setFilteredHeroes(heroesData);
+
+        // Preload images after fetching heroes
+        heroesData.forEach((hero: HeroData) => {
+          const img = new Image();
+          const imageUrl = getImageUrl(hero.URL);
+          img.src = imageUrl;
+          img.onload = () => {
+            setLoadedImages((prev) => new Set(prev).add(hero.her));
+            clearTimeout(timeoutRefs.current.get(hero.her)); // Clear timeout on load
+          };
+          img.onerror = () => {
+            setLoadedImages((prev) => new Set(prev).add(hero.her)); // Mark as loaded on error
+            clearTimeout(timeoutRefs.current.get(hero.her)); // Clear timeout on error
+          };
+
+          // Set fallback timeout
+          const timeout = setTimeout(() => {
+            setLoadedImages((prev) => new Set(prev).add(hero.her));
+          }, 5000);
+          timeoutRefs.current.set(hero.her, timeout);
+        });
       } catch (err) {
         const errorMessage =
           err instanceof AxiosError
@@ -50,6 +72,12 @@ const ViewHero: React.FC = () => {
     };
 
     fetchHeroes();
+
+    // Cleanup timeouts on unmount
+    return () => {
+      timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
+      timeoutRefs.current.clear();
+    };
   }, []);
 
   useEffect(() => {
@@ -57,7 +85,7 @@ const ViewHero: React.FC = () => {
       .filter((hero) => {
         const matchesSearch =
           hero.her.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          hero.roll.toLowerCase().includes(searchQuery.toLowerCase());
+          hero.roll.toLowerCase().includes( searchQuery.toLowerCase());
         const matchesRole = roleFilter ? hero.roll === roleFilter : true;
         return matchesSearch && matchesRole;
       })
@@ -95,18 +123,6 @@ const ViewHero: React.FC = () => {
       // Fallback to a placeholder if URL processing fails
       return "https://via.placeholder.com/50?text=Hero";
     }
-  };
-
-  // Handle image load or error
-  const handleImageLoad = (heroName: string) => {
-    setLoadedImages((prev) => new Set(prev).add(heroName));
-  };
-
-  // Fallback timeout to ensure spinner doesn't persist indefinitely
-  const setImageTimeout = (heroName: string) => {
-    setTimeout(() => {
-      setLoadedImages((prev) => new Set(prev).add(heroName));
-    }, 5000); // 5 seconds fallback
   };
 
   return (
@@ -224,12 +240,6 @@ const ViewHero: React.FC = () => {
                   alt={`${hero.her} image`}
                   className={`w-10 sm:w-12 md:w-14 h-10 sm:h-12 md:h-14 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse ${loadedImages.has(hero.her) ? '' : 'hidden'}`}
                   loading="lazy"
-                  onLoad={() => handleImageLoad(hero.her)}
-                  onError={(e) => {
-                    e.currentTarget.src = "https://via.placeholder.com/50?text=Hero";
-                    handleImageLoad(hero.her); // Mark as loaded to hide spinner
-                  }}
-                  onLoadStart={() => setImageTimeout(hero.her)} // Set timeout on load start
                 />
                 <h2 className="font-bold text-sm sm:text-base md:text-lg text-blue-300 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
                   {hero.her}
