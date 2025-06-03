@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
-import { FaArrowRight } from "react-icons/fa";
 
 interface SkinData {
   id: string;
@@ -21,6 +20,7 @@ const ViewSkin: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
+  const [selectedHero, setSelectedHero] = useState<string | null>(null);
 
   const roleOptions = [
     "Fighter",
@@ -40,6 +40,10 @@ const ViewSkin: React.FC = () => {
   ];
 
   useEffect(() => {
+    // Get the selected hero from sessionStorage
+    const hero = sessionStorage.getItem("selectedHero");
+    setSelectedHero(hero);
+
     const fetchSkins = async () => {
       try {
         const response = await axios.get(
@@ -68,6 +72,8 @@ const ViewSkin: React.FC = () => {
   useEffect(() => {
     const filtered = skins
       .filter((skin) => {
+        // Filter by selected hero from sessionStorage
+        const matchesHero = selectedHero ? skin.hero === selectedHero : true;
         const matchesSearch =
           skin.hero.toLowerCase().includes(searchQuery.toLowerCase()) ||
           skin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,11 +82,11 @@ const ViewSkin: React.FC = () => {
           );
         const matchesType = typeFilter ? skin.type === typeFilter : true;
         const matchesRole = roleFilter ? skin.role.includes(roleFilter) : true;
-        return matchesSearch && matchesType && matchesRole;
+        return matchesHero && matchesSearch && matchesType && matchesRole;
       })
       .sort((a, b) => a.hero.localeCompare(b.hero)); // Sort by hero name A-Z
     setFilteredSkins(filtered);
-  }, [searchQuery, typeFilter, roleFilter, skins]);
+  }, [searchQuery, typeFilter, roleFilter, skins, selectedHero]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -94,10 +100,29 @@ const ViewSkin: React.FC = () => {
     setRoleFilter(e.target.value);
   };
 
+  // Function to clean and optimize image URL for display
+  const getImageUrl = (url: string): string => {
+    try {
+      // Decode escaped characters (e.g., \/ to /)
+      const decodedUrl = url.replace(/\\+/g, '');
+      // Check if the URL is from wikia.nocookie.net
+      if (decodedUrl.includes("static.wikia.nocookie.net")) {
+        // Remove /revision/latest and query params to get a cleaner URL
+        const baseUrl = decodedUrl.split("/revision/latest")[0];
+        return baseUrl;
+      }
+      // For other URLs (e.g., ibb.co), return decoded URL
+      return decodedUrl;
+    } catch (e) {
+      // Fallback to a placeholder if URL processing fails
+      return "https://via.placeholder.com/50?text=Skin";
+    }
+  };
+
   return (
     <div className="container mx-auto p-2 sm:p-3 text-white">
       <h1 className="text-3xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-4 sm:mb-6 md:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)]">
-        View Skins
+        View Skins {selectedHero ? `for ${selectedHero}` : ""}
       </h1>
 
       {/* Search and Filter Section */}
@@ -165,43 +190,37 @@ const ViewSkin: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3 sm:gap-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
           {filteredSkins.length === 0 && !error && (
-            <p className="text-center text-blue-300 col-span-full">
-              No skins found.
+            <p className="text-center text-blue-300">
+              No skins found{selectedHero ? ` for ${selectedHero}` : ""}.
             </p>
           )}
           {filteredSkins.map((skin) => (
             <div
               key={skin.id}
-              className="relative bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(59,130,246,0.7)] hover:animate-glitch"
+              className="flex items-center justify-between bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl p-3 sm:p-4 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(59,130,246,0.7)]"
             >
-              <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none animate-neon-pulse pointer-events-none"></div>
-              <div className="relative z-10 pt-6 sm:pt-6 lg:pt-7 p-3 sm:p-3 lg:p-4">
-                <div className="flex items-center justify-center mb-2 sm:mb-2 lg:mb-3">
-                  <img
-                    src={skin.img1}
-                    alt={`${skin.name} img1`}
-                    className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
-                    loading="lazy"
-                  />
-                  <FaArrowRight className="text-blue-300 mx-2 text-xl sm:text-xl md:text-2xl lg:text-3xl animate-neon-pulse" />
-                  <img
-                    src={skin.img2}
-                    alt={`${skin.name} img2`}
-                    className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
-                    loading="lazy"
-                  />
-                </div>
-                <h2 className="text-center font-bold text-sm sm:text-sm md:text-base lg:text-lg text-blue-300 mb-2 sm:mb-2 lg:mb-3 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <img
+                  src={getImageUrl(skin.img1)}
+                  alt={`${skin.name} image`}
+                  className="w-10 sm:w-12 md:w-14 h-10 sm:h-12 md:h-14 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
+                  loading="lazy"
+                  onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/50?text=Skin")}
+                />
+                <h2 className="font-bold text-sm sm:text-base md:text-lg text-blue-300 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
                   {skin.name}
                 </h2>
-                <a href={skin.url} target="_blank" rel="noreferrer">
-                  <button className="w-full bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-1.5 sm:px-3 md:py-2 md:px-4 lg:py-2.5 lg:px-5 rounded-lg text-sm sm:text-sm md:text-base lg:text-lg font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300">
-                    Inject
-                  </button>
-                </a>
               </div>
+              <a
+                href={skin.url}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-1.5 sm:px-4 md:py-2 md:px-5 rounded-lg text-sm sm:text-sm md:text-base font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
+              >
+                Inject
+              </a>
             </div>
           ))}
         </div>
