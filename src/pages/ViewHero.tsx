@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
-import { FaArrowRight } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 interface HeroData {
@@ -36,8 +35,13 @@ const ViewHero: React.FC = () => {
         if (!Array.isArray(heroesData)) {
           throw new Error("list.json is not a valid array");
         }
-        setHeroes(heroesData);
-        setFilteredHeroes(heroesData);
+        // Decode escaped URLs in the data
+        const decodedHeroes = heroesData.map((hero: HeroData) => ({
+          ...hero,
+          URL: hero.URL.replace(/\\\//g, "/"), // Replace escaped slashes with regular slashes
+        }));
+        setHeroes(decodedHeroes);
+        setFilteredHeroes(decodedHeroes);
       } catch (err) {
         const errorMessage =
           err instanceof AxiosError
@@ -131,41 +135,35 @@ const ViewHero: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3 sm:gap-4">
+        <div className="space-y-3 sm:space-y-4">
           {filteredHeroes.length === 0 && !error && (
-            <p className="text-center text-blue-300 col-span-full">
+            <p className="text-center text-blue-300">
               No heroes found.
             </p>
           )}
           {filteredHeroes.map((hero) => (
             <div
               key={hero.her}
-              className="relative bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(59,130,246,0.7)] hover:animate-glitch"
+              className="flex items-center bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(59,130,246,0.7)]"
             >
               <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none animate-neon-pulse pointer-events-none"></div>
-              <div className="relative z-10 pt-6 sm:pt-6 lg:pt-7 p-3 sm:p-3 lg:p-4">
-                <div className="flex items-center justify-center mb-2 sm:mb-2 lg:mb-3">
-                  <img
-                    src={hero.URL}
-                    alt={`${hero.her} image`}
-                    className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
-                    loading="lazy"
-                  />
-                  <FaArrowRight className="text-blue-300 mx-2 text-xl sm:text-xl md:text-2xl lg:text-3xl animate-neon-pulse" />
-                  <img
-                    src={hero.URL}
-                    alt={`${hero.her} image`}
-                    className="w-12 sm:w-12 md:w-16 lg:w-20 h-12 sm:h-12 md:h-16 lg:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
-                    loading="lazy"
-                  />
-                </div>
-                <h2 className="text-center font-bold text-sm sm:text-sm md:text-base lg:text-lg text-blue-300 mb-2 sm:mb-2 lg:mb-3 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+              <div className="relative z-10 flex items-center w-full p-3 sm:p-4">
+                <img
+                  src={hero.URL}
+                  alt={`${hero.her} image`}
+                  className="w-10 sm:w-12 md:w-14 lg:w-16 h-10 sm:h-12 md:h-14 lg:h-16 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://via.placeholder.com/150?text=Image+Failed";
+                  }}
+                />
+                <h2 className="flex-1 text-center font-bold text-sm sm:text-base md:text-lg lg:text-xl text-blue-300 mx-4 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
                   {hero.her}
                 </h2>
                 <Link
                   to="/unlock-skin"
                   onClick={() => handleViewClick(hero.her)}
-                  className="w-full bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-1.5 sm:px-3 md:py-2 md:px-4 lg:py-2.5 lg:px-5 rounded-lg text-sm sm:text-sm md:text-base lg:text-lg font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300 block text-center"
+                  className="bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-1.5 sm:px-4 md:py-2 md:px-5 lg:py-2.5 lg:px-6 rounded-lg text-xs sm:text-sm md:text-base lg:text-lg font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
                 >
                   View
                 </Link>
