@@ -13,6 +13,7 @@ import ViewBattleEmote from "./pages/ViewBattleEmote";
 import ViewElimination from "./pages/ViewElimination";
 import SkinManipulate from "./pages/SkinManipulate";
 import ManageBattleEffect from "./pages/ManageBattleEffect";
+import ViewHero from "./pages/ViewHero"; // Import the new ViewHero component
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const ErrorFallback = (
@@ -82,6 +83,11 @@ const router = createBrowserRouter([
       {
         path: "elimination-effect",
         element: <ViewElimination />,
+        errorElement: ErrorFallback,
+      },
+      {
+        path: "view-hero",
+        element: <ViewHero />,
         errorElement: ErrorFallback,
       },
     ],
