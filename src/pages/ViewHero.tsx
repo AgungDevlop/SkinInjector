@@ -77,18 +77,20 @@ const ViewHero: React.FC = () => {
     sessionStorage.setItem("selectedHero", heroName);
   };
 
-  // Function to clean and validate image URL
+  // Function to clean and optimize image URL for display
   const getImageUrl = (url: string): string => {
     try {
       // Decode escaped characters (e.g., \/ to /)
       const decodedUrl = url.replace(/\\+/g, '');
-      // Check if the URL is from a known source like wikia.nocookie.net
+      // Check if the URL is from wikia.nocookie.net
       if (decodedUrl.includes("static.wikia.nocookie.net")) {
-        // Remove /revision/latest and any query params for better image reliability
+        // Remove /revision/latest and query params to get a cleaner URL
         const baseUrl = decodedUrl.split("/revision/latest")[0];
+        // Ensure the URL ends with a common image extension or adjust as needed
+        // Some wikia URLs work better without query params
         return baseUrl;
       }
-      // Return the decoded URL as a fallback
+      // For other URLs (e.g., ibb.co), return decoded URL
       return decodedUrl;
     } catch (e) {
       // Fallback to a placeholder if URL processing fails
