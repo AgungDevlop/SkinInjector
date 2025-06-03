@@ -17,7 +17,7 @@ const ViewBattleEmote: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
-  const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map()); // Track timeouts per image
+  const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
     const fetchBattleEmotes = async () => {
@@ -32,33 +32,31 @@ const ViewBattleEmote: React.FC = () => {
         setBattleEmotes(battleEmotesData);
         setFilteredBattleEmotes(battleEmotesData);
 
-        // Preload images after fetching battle emotes
         battleEmotesData.forEach((battleEmote: BattleEmoteData) => {
           ['img1', 'img2'].forEach((imgType) => {
             const img = new Image();
             img.src = battleEmote[imgType as keyof BattleEmoteData];
             img.onload = () => {
-              setLoadedImages((prev) => new Set(prev).add(`${battleEmote.id}-${imgType}`));
-              clearTimeout(timeoutRefs.current.get(`${battleEmote.id}-${imgType}`));
+              setLoadedImages((prev) => new Set(prev).add(\`\${battleEmote.id}-\${imgType}\`));
+              clearTimeout(timeoutRefs.current.get(\`\${battleEmote.id}-\${imgType}\`));
             };
             img.onerror = () => {
-              setLoadedImages((prev) => new Set(prev).add(`${battleEmote.id}-${imgType}`));
-              clearTimeout(timeoutRefs.current.get(`${battleEmote.id}-${imgType}`));
+              setLoadedImages((prev) => new Set(prev).add(\`\${battleEmote.id}-\${imgType}\`));
+              clearTimeout(timeoutRefs.current.get(\`\${battleEmote.id}-\${imgType}\`));
             };
 
-            // Set fallback timeout
             const timeout = setTimeout(() => {
-              setLoadedImages((prev) => new Set(prev).add(`${battleEmote.id}-${imgType}`));
+              setLoadedImages((prev) => new Set(prev).add(\`\${battleEmote.id}-\${imgType}\`));
             }, 5000);
-            timeoutRefs.current.set(`${battleEmote.id}-${imgType}`, timeout);
+            timeoutRefs.current.set(\`\${battleEmote.id}-\${imgType}\`, timeout);
           });
         });
       } catch (err) {
         const errorMessage =
           err instanceof AxiosError
-            ? `${err.message} (Status: ${err.response?.status})`
+            ? \`\${err.message} (Status: \${err.response?.status})\`
             : "Unknown error";
-        setError(`Failed to fetch battle emotes: ${errorMessage}`);
+        setError(\`Failed to fetch battle emotes: \${errorMessage}\`);
       } finally {
         setIsLoading(false);
       }
@@ -66,7 +64,6 @@ const ViewBattleEmote: React.FC = () => {
 
     fetchBattleEmotes();
 
-    // Cleanup timeouts on unmount
     return () => {
       timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
       timeoutRefs.current.clear();
@@ -78,7 +75,7 @@ const ViewBattleEmote: React.FC = () => {
       .filter((battleEmote) =>
         battleEmote.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
-      .sort((a, b) => a.name.localeCompare(b.name)); // Sort by name A-Z
+      .sort((a, b) => a.name.localeCompare(b.name));
     setFilteredBattleEmotes(filtered);
   }, [searchQuery, battleEmotes]);
 
@@ -89,7 +86,7 @@ const ViewBattleEmote: React.FC = () => {
   return (
     <div className="container mx-auto p-4 sm:p-6 text-white">
       <style>
-        {`
+        {\`
           @keyframes pulse-ring {
             0% { transform: scale(0.33); opacity: 1; }
             80%, 100% { opacity: 0; }
@@ -126,13 +123,12 @@ const ViewBattleEmote: React.FC = () => {
             animation: pulse-dot 1.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
             position: absolute;
           }
-        `}
+        \`}
       </style>
       <h1 className="text-4xl sm:text-4xl md:text-5xl font-extrabold text-blue-400 mb-6 sm:mb-8 md:mb-10 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)]">
         View Battle Emotes
       </h1>
 
-      {/* Search Section */}
       <div className="mb-8">
         <input
           type="text"
@@ -143,14 +139,12 @@ const ViewBattleEmote: React.FC = () => {
         />
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="mb-8 p-6 bg-red-900/60 text-red-200 rounded-lg text-base backdrop-blur-sm border border-red-400/50 animate-neon-pulse">
           {error}
         </div>
       )}
 
-      {/* Battle Emote List */}
       {isLoading ? (
         <div className="flex justify-center">
           <div className="w-10 h-10 relative animate-ios-spinner">
@@ -168,33 +162,33 @@ const ViewBattleEmote: React.FC = () => {
           {filteredBattleEmotes.map((battleEmote) => (
             <div
               key={battleEmote.id}
-              className="flex items-center justify-between bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-2xl p-4 sm:p-6 md:p-8 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(59,130,246,0.8)]"
+              className="flex items-center justify-between bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-2xl p-3 sm:p-4 md:p-6 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(59,130,246,0.8)]"
             >
-              <div className="flex items-center gap-4 sm:gap-6 md:gap-8">
-                {!loadedImages.has(`${battleEmote.id}-img1`) && (
-                  <div className="w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 flex items-center justify-center">
+              <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+                {!loadedImages.has(\`\${battleEmote.id}-img1\`) && (
+                  <div className="w-10 sm:w-12 md:w-16 h-10 sm:h-12 md:h-16 flex items-center justify-center">
                     <div className="custom-spinner"></div>
                   </div>
                 )}
                 <img
                   src={battleEmote.img1}
-                  alt={`${battleEmote.name} img1`}
-                  className={`w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse ${loadedImages.has(`${battleEmote.id}-img1`) ? '' : 'hidden'}`}
+                  alt={\`\${battleEmote.name} img1\`}
+                  className={\`w-10 sm:w-12 md:w-16 h-10 sm:h-12 md:h-16 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse \${loadedImages.has(\`\${battleEmote.id}-img1\`) ? '' : 'hidden'}\`}
                   loading="lazy"
                 />
-                <FaArrowRight className="text-blue-300 mx-2 text-xl sm:text-2xl md:text-3xl animate-neon-pulse" />
-                {!loadedImages.has(`${battleEmote.id}-img2`) && (
-                  <div className="w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 flex items-center justify-center">
+                <FaArrowRight className="text-blue-300 mx-1 text-lg sm:text-xl md:text-2xl animate-neon-pulse" />
+                {!loadedImages.has(\`\${battleEmote.id}-img2\`) && (
+                  <div className="w-10 sm:w-12 md:w-16 h-10 sm:h-12 md:h-16 flex items-center justify-center">
                     <div className="custom-spinner"></div>
                   </div>
                 )}
                 <img
                   src={battleEmote.img2}
-                  alt={`${battleEmote.name} img2`}
-                  className={`w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse ${loadedImages.has(`${battleEmote.id}-img2`) ? '' : 'hidden'}`}
+                  alt={\`\${battleEmote.name} img2\`}
+                  className={\`w-10 sm:w-12 md:w-16 h-10 sm:h-12 md:h-16 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse \${loadedImages.has(\`\${battleEmote.id}-img2\`) ? '' : 'hidden'}\`}
                   loading="lazy"
                 />
-                <h2 className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl text-blue-300 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                <h2 className="font-bold text-sm sm:text-base md:text-lg lg:text-xl text-blue-300 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
                   {battleEmote.name}
                 </h2>
               </div>
@@ -202,7 +196,7 @@ const ViewBattleEmote: React.FC = () => {
                 href={battleEmote.url}
                 target="_blank"
                 rel="noreferrer"
-                className="bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-2 px-4 sm:py-2.5 sm:px-5 md:py-3 md:px-6 rounded-lg text-base sm:text-base md:text-lg font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_10px_rgba(59,130,246,0.8),0_0_20px_rgba(59,130,246,0.6)] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
+                className="bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-2 sm:px-4 md:py-2.5 md:px-5 rounded-lg text-sm sm:text-sm md:text-base font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_10px_rgba(59,130,246,0.8),0_0_20px_rgba(59,130,246,0.6)] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
               >
                 Inject
               </a>
