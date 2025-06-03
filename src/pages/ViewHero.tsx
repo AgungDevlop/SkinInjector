@@ -15,6 +15,7 @@ const ViewHero: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   const roleOptions = [
     "Fighter",
@@ -86,8 +87,6 @@ const ViewHero: React.FC = () => {
       if (decodedUrl.includes("static.wikia.nocookie.net")) {
         // Remove /revision/latest and query params to get a cleaner URL
         const baseUrl = decodedUrl.split("/revision/latest")[0];
-        // Ensure the URL ends with a common image extension or adjust as needed
-        // Some wikia URLs work better without query params
         return baseUrl;
       }
       // For other URLs (e.g., ibb.co), return decoded URL
@@ -98,8 +97,60 @@ const ViewHero: React.FC = () => {
     }
   };
 
+  // Handle image load or error
+  const handleImageLoad = (heroName: string) => {
+    setLoadedImages((prev) => new Set(prev).add(heroName));
+  };
+
+  // Fallback timeout to ensure spinner doesn't persist indefinitely
+  const setImageTimeout = (heroName: string) => {
+    setTimeout(() => {
+      setLoadedImages((prev) => new Set(prev).add(heroName));
+    }, 5000); // 5 seconds fallback
+  };
+
   return (
     <div className="container mx-auto p-2 sm:p-3 text-white">
+      <style>
+        {`
+          @keyframes pulse-ring {
+            0% { transform: scale(0.33); opacity: 1; }
+            80%, 100% { opacity: 0; }
+          }
+          @keyframes pulse-dot {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1); }
+            100% { transform: scale(0.8); }
+          }
+          .custom-spinner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .custom-spinner::before {
+            content: '';
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top-color: #3b82f6;
+            animation: pulse-ring 1.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            position: absolute;
+          }
+          .custom-spinner::after {
+            content: '';
+            width: 50%;
+            height: 50%;
+            background: #3b82f6;
+            border-radius: 50%;
+            animation: pulse-dot 1.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+            position: absolute;
+          }
+        `}
+      </style>
       <h1 className="text-3xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-4 sm:mb-6 md:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)]">
         View Heroes
       </h1>
@@ -163,12 +214,22 @@ const ViewHero: React.FC = () => {
               className="flex items-center justify-between bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl p-3 sm:p-4 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(59,130,246,0.7)]"
             >
               <div className="flex items-center gap-3 sm:gap-4">
+                {!loadedImages.has(hero.her) && (
+                  <div className="w-10 sm:w-12 md:w-14 h-10 sm:h-12 md:h-14 flex items-center justify-center">
+                    <div className="custom-spinner"></div>
+                  </div>
+                )}
                 <img
                   src={getImageUrl(hero.URL)}
                   alt={`${hero.her} image`}
-                  className="w-10 sm:w-12 md:w-14 h-10 sm:h-12 md:h-14 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
+                  className={`w-10 sm:w-12 md:w-14 h-10 sm:h-12 md:h-14 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse ${loadedImages.has(hero.her) ? '' : 'hidden'}`}
                   loading="lazy"
-                  onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/50?text=Hero")}
+                  onLoad={() => handleImageLoad(hero.her)}
+                  onError={(e) => {
+                    e.currentTarget.src = "https://via.placeholder.com/50?text=Hero";
+                    handleImageLoad(hero.her); // Mark as loaded to hide spinner
+                  }}
+                  onLoadStart={() => setImageTimeout(hero.her)} // Set timeout on load start
                 />
                 <h2 className="font-bold text-sm sm:text-base md:text-lg text-blue-300 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
                   {hero.her}
