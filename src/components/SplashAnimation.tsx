@@ -125,7 +125,7 @@ const SplashAnimation: React.FC<SplashAnimationProps> = ({ onAnimationComplete }
           </div>
         )}
         <img
-          src="https://images.dwncdn.net/images/t_app-icon-l/p/99017561-4e15-42b5-9538-a6f4b1f0f1eb/259597479/skin-tools-ml-oti-logo"
+          src="icon.webp"
           alt="Skin Tools ML Logo"
           className={`w-36 h-36 sm:w-40 sm:h-40 rounded-full object-cover ring-4 ring-blue-400 bg-gray-900 p-1 transition-all duration-1000 ${showLogo && logoLoaded ? 'animate-[logo-reveal_1s_ease-out_forwards]' : 'opacity-0 scale-50'}`}
           onLoad={handleLogoLoad}
