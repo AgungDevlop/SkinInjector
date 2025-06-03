@@ -79,15 +79,20 @@ const ViewSkin: React.FC = () => {
     }
   };
 
+  // Function to determine display name
+  const getDisplayName = (skin: SkinData): string => {
+    return skin.type === "Backup" ? `${skin.hero} Backup` : skin.name;
+  };
+
   return (
-    <div className="container mx-auto p-2 sm:p-3 text-white">
-      <h1 className="text-3xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-4 sm:mb-6 md:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)]">
+    <div className="container mx-auto p-2 sm:p-4 md:p-6 text-white">
+      <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-blue-400 mb-6 sm:mb-8 md:mb-10 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)]">
         View Skins {selectedHero ? `for ${selectedHero}` : ""}
       </h1>
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 p-4 bg-red-900/60 text-red-200 rounded-lg text-sm backdrop-blur-sm border border-red-400/50 animate-neon-pulse">
+        <div className="mb-6 p-4 bg-red-900/60 text-red-200 rounded-lg text-base sm:text-lg backdrop-blur-sm border border-red-400/50 animate-neon-pulse">
           {error}
         </div>
       )}
@@ -95,40 +100,40 @@ const ViewSkin: React.FC = () => {
       {/* Skin List */}
       {isLoading ? (
         <div className="flex justify-center">
-          <div className="w-8 h-8 relative animate-ios-spinner">
-            <div className="absolute inset-0 rounded-full border-t-2 border-gray-400 opacity-20"></div>
+          <div className="w-10 h-10 relative animate-ios-spinner">
+            <div className="absent inset-0 rounded-full border-t-2 border-gray-400 opacity-20"></div>
             <div className="absolute inset-0 rounded-full border-t-2 border-gray-400 animate-spin"></div>
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="flex flex-col gap-4 sm:gap-6 md:gap-8">
           {filteredSkins.length === 0 && !error && (
-            <p className="text-center text-blue-300">
+            <p className="text-center text-blue-300 text-lg sm:text-xl md:text-2xl">
               No skins found{selectedHero ? ` for ${selectedHero}` : ""}.
             </p>
           )}
           {filteredSkins.map((skin) => (
             <div
               key={skin.id}
-              className="flex items-center justify-between bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl p-3 sm:p-4 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(59,130,246,0.7)]"
+              className="flex items-center justify-between bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl p-4 sm:p-6 md:p-8 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(59,130,246,0.7)]"
             >
-              <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-4 sm:gap-6 md:gap-8">
                 <img
                   src={getImageUrl(skin.img2)}
                   alt={`${skin.name} image`}
-                  className="w-10 sm:w-12 md:w-14 h-10 sm:h-12 md:h-14 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
+                  className="w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
                   loading="lazy"
-                  onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/50?text=Skin")}
+                  onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/80?text=Skin")}
                 />
-                <h2 className="font-bold text-sm sm:text-base md:text-lg text-blue-300 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
-                  {skin.name}
+                <h2 className="font-bold text-base sm:text-xl md:text-2xl text-blue-300 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                  {getDisplayName(skin)}
                 </h2>
               </div>
               <a
                 href={skin.url}
                 target="_blank"
                 rel="noreferrer"
-                className="bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-1.5 sm:px-4 md:py-2 md:px-5 rounded-lg text-sm sm:text-sm md:text-base font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
+                className="bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-2 px-4 sm:py-2.5 sm:px-5 md:py-3 md:px-6 rounded-lg text-base sm:text-lg md:text-xl font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
               >
                 Inject
               </a>
