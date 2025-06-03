@@ -5,9 +5,10 @@ interface SplashAnimationProps {
 }
 
 const SplashAnimation: React.FC<SplashAnimationProps> = ({ onAnimationComplete }) => {
-  const [showLogo, setShowLogo] = useState(false);
   const [showPulse, setShowPulse] = useState(false);
+  const [showLogo, setShowLogo] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
+  const [logoLoaded, setLogoLoaded] = useState(false);
 
   useEffect(() => {
     // Start pulse animation after 300ms
@@ -20,7 +21,7 @@ const SplashAnimation: React.FC<SplashAnimationProps> = ({ onAnimationComplete }
       setShowLogo(true);
     }, 500);
 
-    // Show spinner after 2.5s
+    // Show spinner after 2.5s (for transition)
     const startSpinner = setTimeout(() => {
       setShowSpinner(true);
     }, 2500);
@@ -37,6 +38,18 @@ const SplashAnimation: React.FC<SplashAnimationProps> = ({ onAnimationComplete }
       clearTimeout(completeAnimation);
     };
   }, [onAnimationComplete]);
+
+  // Handle logo load or error
+  const handleLogoLoad = () => {
+    setLogoLoaded(true);
+  };
+
+  // Fallback timeout to ensure spinner doesn't persist indefinitely
+  const setLogoTimeout = () => {
+    setTimeout(() => {
+      setLogoLoaded(true);
+    }, 5000); // 5 seconds fallback
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex justify-center items-center bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 overflow-hidden">
@@ -106,11 +119,21 @@ const SplashAnimation: React.FC<SplashAnimationProps> = ({ onAnimationComplete }
       )}
       {/* Logo and Ring */}
       <div className="relative z-50 flex justify-center items-center">
+        {!logoLoaded && (
+          <div className="w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center">
+            <div className="custom-spinner w-12 h-12 sm:w-14 sm:h-14"></div>
+          </div>
+        )}
         <img
           src="https://images.dwncdn.net/images/t_app-icon-l/p/99017561-4e15-42b5-9538-a6f4b1f0f1eb/259597479/skin-tools-ml-oti-logo"
           alt="Skin Tools ML Logo"
-          className={`w-36 h-36 sm:w-40 sm:h-40 rounded-full object-cover ring-4 ring-blue-400 bg-gray-900 p-1 transition-all duration-1000 ${showLogo ? 'animate-[logo-reveal_1s_ease-out_forwards]' : 'opacity-0 scale-50'}`}
-          loading="lazy"
+          className={`w-36 h-36 sm:w-40 sm:h-40 rounded-full object-cover ring-4 ring-blue-400 bg-gray-900 p-1 transition-all duration-1000 ${showLogo && logoLoaded ? 'animate-[logo-reveal_1s_ease-out_forwards]' : 'opacity-0 scale-50'}`}
+          onLoad={handleLogoLoad}
+          onError={(e) => {
+            e.currentTarget.src = "https://via.placeholder.com/150?text=Logo";
+            handleLogoLoad(); // Mark as loaded to hide spinner
+          }}
+          onLoadStart={setLogoTimeout} // Set timeout on load start
         />
         <div
           className={`absolute w-44 h-44 sm:w-48 sm:h-48 rounded-full border-2 border-blue-400 opacity-30 animate-spin-slow ${showLogo ? 'opacity-30' : 'opacity-0'}`}
