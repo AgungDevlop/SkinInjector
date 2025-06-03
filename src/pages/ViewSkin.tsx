@@ -15,29 +15,9 @@ interface SkinData {
 const ViewSkin: React.FC = () => {
   const [skins, setSkins] = useState<SkinData[]>([]);
   const [filteredSkins, setFilteredSkins] = useState<SkinData[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [typeFilter, setTypeFilter] = useState<string>("");
-  const [roleFilter, setRoleFilter] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [selectedHero, setSelectedHero] = useState<string | null>(null);
-
-  const roleOptions = [
-    "Fighter",
-    "Tank",
-    "Mage",
-    "Marksman",
-    "Assassin",
-    "Support",
-  ];
-
-  const typeOptions = [
-    "Backup",
-    "Original",
-    "Upgrade",
-    "Custom Skin",
-    "Painted Skin",
-  ];
 
   useEffect(() => {
     // Get the selected hero from sessionStorage
@@ -74,31 +54,11 @@ const ViewSkin: React.FC = () => {
       .filter((skin) => {
         // Filter by selected hero from sessionStorage
         const matchesHero = selectedHero ? skin.hero === selectedHero : true;
-        const matchesSearch =
-          skin.hero.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          skin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          skin.role.some((role) =>
-            role.toLowerCase().includes(searchQuery.toLowerCase())
-          );
-        const matchesType = typeFilter ? skin.type === typeFilter : true;
-        const matchesRole = roleFilter ? skin.role.includes(roleFilter) : true;
-        return matchesHero && matchesSearch && matchesType && matchesRole;
+        return matchesHero;
       })
       .sort((a, b) => a.hero.localeCompare(b.hero)); // Sort by hero name A-Z
     setFilteredSkins(filtered);
-  }, [searchQuery, typeFilter, roleFilter, skins, selectedHero]);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTypeFilter(e.target.value);
-  };
-
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRoleFilter(e.target.value);
-  };
+  }, [skins, selectedHero]);
 
   // Function to clean and optimize image URL for display
   const getImageUrl = (url: string): string => {
@@ -124,55 +84,6 @@ const ViewSkin: React.FC = () => {
       <h1 className="text-3xl sm:text-3xl md:text-4xl font-extrabold text-blue-400 mb-4 sm:mb-6 md:mb-8 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)]">
         View Skins {selectedHero ? `for ${selectedHero}` : ""}
       </h1>
-
-      {/* Search and Filter Section */}
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search by Hero, Name, or Role..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 mb-4 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-        />
-        <div className="grid grid-cols-2 gap-4">
-          <select
-            value={typeFilter}
-            onChange={handleTypeChange}
-            className="w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-          >
-            <option value="" className="bg-gray-900 text-blue-300">
-              All Types
-            </option>
-            {typeOptions.map((type) => (
-              <option
-                key={type}
-                value={type}
-                className="bg-gray-900 text-blue-300"
-              >
-                {type}
-              </option>
-            ))}
-          </select>
-          <select
-            value={roleFilter}
-            onChange={handleRoleChange}
-            className="w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-          >
-            <option value="" className="bg-gray-900 text-blue-300">
-              All Roles
-            </option>
-            {roleOptions.map((role) => (
-              <option
-                key={role}
-                value={role}
-                className="bg-gray-900 text-blue-300"
-              >
-                {role}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
 
       {/* Error Message */}
       {error && (
@@ -203,7 +114,7 @@ const ViewSkin: React.FC = () => {
             >
               <div className="flex items-center gap-3 sm:gap-4">
                 <img
-                  src={getImageUrl(skin.img1)}
+                  src={getImageUrl(skin.img2)}
                   alt={`${skin.name} image`}
                   className="w-10 sm:w-12 md:w-14 h-10 sm:h-12 md:h-14 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
                   loading="lazy"
