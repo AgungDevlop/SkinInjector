@@ -18,7 +18,7 @@ const ViewSkin: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [selectedHero, setSelectedHero] = useState<string | null>(null);
-  const [imageLoaded, setImageLoaded] = useState<{ [key: string]: boolean }>({});
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // Get the selected hero from sessionStorage
@@ -80,13 +80,60 @@ const ViewSkin: React.FC = () => {
     }
   };
 
-  // Handle image load completion
+  // Handle image load or error
   const handleImageLoad = (skinId: string) => {
-    setImageLoaded((prev) => ({ ...prev, [skinId]: true }));
+    setLoadedImages((prev) => new Set(prev).add(skinId));
+  };
+
+  // Fallback timeout to ensure spinner doesn't persist indefinitely
+  const setImageTimeout = (skinId: string) => {
+    setTimeout(() => {
+      setLoadedImages((prev) => new Set(prev).add(skinId));
+    }, 5000); // 5 seconds fallback
   };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 text-white">
+      <style>
+        {`
+          @keyframes pulse-ring {
+            0% { transform: scale(0.33); opacity: 1; }
+            80%, 100% { opacity: 0; }
+          }
+          @keyframes pulse-dot {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1); }
+            100% { transform: scale(0.8); }
+          }
+          .custom-spinner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .custom-spinner::before {
+            content: '';
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top-color: #3b82f6;
+            animation: pulse-ring 1.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            position: absolute;
+          }
+          .custom-spinner::after {
+            content: '';
+            width: 50%;
+            height: 50%;
+            background: #3b82f6;
+            border-radius: 50%;
+            animation: pulse-dot 1.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+            position: absolute;
+          }
+        `}
+      </style>
       <h1 className="text-4xl sm:text-4xl md:text-5xl font-extrabold text-blue-400 mb-6 sm:mb-8 md:mb-10 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)]">
         View Skins {selectedHero ? `for ${selectedHero}` : ""}
       </h1>
@@ -119,24 +166,22 @@ const ViewSkin: React.FC = () => {
               className="flex items-center justify-between bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-2xl p-4 sm:p-6 md:p-8 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(59,130,246,0.8)]"
             >
               <div className="flex items-center gap-4 sm:gap-6 md:gap-8">
-                {!imageLoaded[skin.id] && (
+                {!loadedImages.has(skin.id) && (
                   <div className="w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 flex items-center justify-center">
-                    <div className="w-8 h-8 relative animate-ios-spinner">
-                      <div className="absolute inset-0 rounded-full border-t-2 border-blue-400 opacity-20"></div>
-                      <div className="absolute inset-0 rounded-full border-t-2 border-blue-400 animate-spin"></div>
-                    </div>
+                    <div className="custom-spinner"></div>
                   </div>
                 )}
                 <img
                   src={getImageUrl(skin.img2)}
                   alt={`${skin.name} image`}
-                  className={`w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse ${imageLoaded[skin.id] ? '' : 'hidden'}`}
+                  className={`w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse ${loadedImages.has(skin.id) ? '' : 'hidden'}`}
                   loading="lazy"
                   onLoad={() => handleImageLoad(skin.id)}
                   onError={(e) => {
                     e.currentTarget.src = "https://via.placeholder.com/50?text=Skin";
                     handleImageLoad(skin.id); // Mark as loaded to hide spinner
                   }}
+                  onLoadStart={() => setImageTimeout(skin.id)} // Set timeout on load start
                 />
                 <h2 className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl text-blue-300 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
                   {skin.type === "Backup" ? `Remove ${skin.name}` : skin.name}
