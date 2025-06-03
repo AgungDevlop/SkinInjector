@@ -1,5 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
 import SplashAnimation from "../components/SplashAnimation";
 import Banner from "../components/Banner";
 
@@ -12,7 +12,7 @@ interface Card {
 const Home: React.FC = () => {
   const [showSplash, setShowSplash] = useState(!sessionStorage.getItem("hasSeenSplash"));
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
-  const location = useLocation(); // Hook to track route changes
+  const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map()); // Track timeouts per image
 
   const cards: Card[] = [
     {
@@ -47,22 +47,33 @@ const Home: React.FC = () => {
     },
   ];
 
-  // Reset loadedImages on route change
+  // Preload images to check their load status
   useEffect(() => {
-    setLoadedImages(new Set()); // Clear loaded images when location changes
-  }, [location]);
+    cards.forEach((card) => {
+      const img = new Image();
+      img.src = card.image;
+      img.onload = () => {
+        setLoadedImages((prev) => new Set(prev).add(card.title));
+        clearTimeout(timeoutRefs.current.get(card.title)); // Clear timeout on load
+      };
+      img.onerror = () => {
+        setLoadedImages((prev) => new Set(prev).add(card.title)); // Mark as loaded on error
+        clearTimeout(timeoutRefs.current.get(card.title)); // Clear timeout on error
+      };
 
-  // Handle image load or error
-  const handleImageLoad = (title: string) => {
-    setLoadedImages((prev) => new Set(prev).add(title));
-  };
+      // Set fallback timeout
+      const timeout = setTimeout(() => {
+        setLoadedImages((prev) => new Set(prev).add(card.title));
+      }, 5000);
+      timeoutRefs.current.set(card.title, timeout);
+    });
 
-  // Fallback timeout to ensure spinner doesn't persist indefinitely
-  const setImageTimeout = (title: string) => {
-    setTimeout(() => {
-      setLoadedImages((prev) => new Set(prev).add(title));
-    }, 5000); // 5 seconds fallback
-  };
+    // Cleanup timeouts on unmount
+    return () => {
+      timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
+      timeoutRefs.current.clear();
+    };
+  }, []); // Run only once on mount
 
   const handleAnimationComplete = () => {
     setShowSplash(false);
@@ -136,16 +147,10 @@ const Home: React.FC = () => {
                       </div>
                     )}
                     <img
-                      src={`${card.image}?t=${new Date().getTime()}`} // Add timestamp to force image reload
+                      src={card.image}
                       alt={card.title}
                       className={`w-full h-20 sm:h-20 md:h-24 lg:h-28 object-cover rounded-md mb-3 sm:mb-3 lg:mb-4 ${loadedImages.has(card.title) ? '' : 'hidden'}`}
                       loading="lazy"
-                      onLoad={() => handleImageLoad(card.title)}
-                      onError={(e) => {
-                        e.currentTarget.src = "https://via.placeholder.com/150?text=Image";
-                        handleImageLoad(card.title); // Mark as loaded to hide spinner
-                      }}
-                      onLoadStart={() => setImageTimeout(card.title)} // Set timeout on load start
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-30 rounded-md"></div>
                   </div>
