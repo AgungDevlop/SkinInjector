@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState } from "react"; // Removed useEffect import as it's not needed
+import { useState } from "react";
 import SplashAnimation from "../components/SplashAnimation";
 import Banner from "../components/Banner";
 
@@ -70,16 +70,15 @@ const Home: React.FC = () => {
         <div className="container mx-auto p-2 sm:p-3 text-white">
           <style>
             {`
-              @keyframes pulse-ring {
-                0% { transform: scale(0.33); opacity: 1; }
-                80%, 100% { opacity: 0; }
+              @keyframes orbit {
+                0% { transform: rotate(0deg) translateX(20px) rotate(0deg); }
+                100% { transform: rotate(360deg) translateX(20px) rotate(-360deg); }
               }
-              @keyframes pulse-dot {
-                0% { transform: scale(0.8); }
-                50% { transform: scale(1); }
-                100% { transform: scale(0.8); }
+              @keyframes glow-pulse {
+                0%, 100% { opacity: 0.5; }
+                50% { opacity: 1; }
               }
-              .custom-spinner {
+              .orbit-spinner {
                 position: relative;
                 width: 100%;
                 height: 100%;
@@ -87,30 +86,33 @@ const Home: React.FC = () => {
                 align-items: center;
                 justify-content: center;
               }
-              .custom-spinner::before {
-                content: '';
-                width: 100%;
-                height: 100%;
-                border-radius: 50%;
-                border: 4px solid transparent;
-                border-top-color: #3b82f6;
-                animation: pulse-ring 1.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+              .orbit-spinner .particle {
                 position: absolute;
+                width: 8px;
+                height: 8px;
+                background: linear-gradient(45deg, #3b82f6, #a5b4fc);
+                border-radius: 50%;
+                box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+                animation: orbit 1.5s linear infinite, glow-pulse 1.5s ease-in-out infinite;
               }
-              .custom-spinner::after {
+              .orbit-spinner .particle:nth-child(1) { animation-delay: 0s; }
+              .orbit-spinner .particle:nth-child(2) { animation-delay: -0.3s; transform: rotate(120deg) translateX(20px); }
+              .orbit-spinner .particle:nth-child(3) { animation-delay: -0.6s; transform: rotate(240deg) translateX(20px); }
+              .orbit-spinner::after {
                 content: '';
-                width: 50%;
-                height: 50%;
+                position: absolute;
+                width: 16px;
+                height: 16px;
                 background: #3b82f6;
                 border-radius: 50%;
-                animation: pulse-dot 1.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
-                position: absolute;
+                box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+                animation: glow-pulse 1.5s ease-in-out infinite;
               }
             `}
           </style>
           <Banner />
           <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3 sm:gap-4">
-            {cards.map((card) => ( // Removed unused 'index' parameter
+            {cards.map((card) => (
               <div
                 key={card.title}
                 className="relative bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(59,130,246,0.7)] hover:animate-glitch"
@@ -120,7 +122,11 @@ const Home: React.FC = () => {
                   <div className="relative">
                     {!loadedImages.has(card.title) && (
                       <div className="w-full h-20 sm:h-20 md:h-24 lg:h-28 flex items-center justify-center bg-gray-800 rounded-md">
-                        <div className="custom-spinner w-8 h-8 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12"></div>
+                        <div className="orbit-spinner w-12 h-12 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16">
+                          <div className="particle"></div>
+                          <div className="particle"></div>
+                          <div className="particle"></div>
+                        </div>
                       </div>
                     )}
                     <img
