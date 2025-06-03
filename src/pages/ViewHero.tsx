@@ -35,13 +35,8 @@ const ViewHero: React.FC = () => {
         if (!Array.isArray(heroesData)) {
           throw new Error("list.json is not a valid array");
         }
-        // Decode escaped URLs in the data
-        const decodedHeroes = heroesData.map((hero: HeroData) => ({
-          ...hero,
-          URL: hero.URL.replace(/\\\//g, "/"), // Replace escaped slashes with regular slashes
-        }));
-        setHeroes(decodedHeroes);
-        setFilteredHeroes(decodedHeroes);
+        setHeroes(heroesData);
+        setFilteredHeroes(heroesData);
       } catch (err) {
         const errorMessage =
           err instanceof AxiosError
@@ -80,6 +75,25 @@ const ViewHero: React.FC = () => {
   const handleViewClick = (heroName: string) => {
     // Save the hero name to sessionStorage for use in ViewSkin
     sessionStorage.setItem("selectedHero", heroName);
+  };
+
+  // Function to clean and validate image URL
+  const getImageUrl = (url: string): string => {
+    try {
+      // Decode escaped characters (e.g., \/ to /)
+      const decodedUrl = url.replace(/\\+/g, '');
+      // Check if the URL is from a known source like wikia.nocookie.net
+      if (decodedUrl.includes("static.wikia.nocookie.net")) {
+        // Remove /revision/latest and any query params for better image reliability
+        const baseUrl = decodedUrl.split("/revision/latest")[0];
+        return baseUrl;
+      }
+      // Return the decoded URL as a fallback
+      return decodedUrl;
+    } catch (e) {
+      // Fallback to a placeholder if URL processing fails
+      return "https://via.placeholder.com/50?text=Hero";
+    }
   };
 
   return (
@@ -135,7 +149,7 @@ const ViewHero: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="space-y-3 sm:space-y-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
           {filteredHeroes.length === 0 && !error && (
             <p className="text-center text-blue-300">
               No heroes found.
@@ -144,30 +158,27 @@ const ViewHero: React.FC = () => {
           {filteredHeroes.map((hero) => (
             <div
               key={hero.her}
-              className="flex items-center bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(59,130,246,0.7)]"
+              className="flex items-center justify-between bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl p-3 sm:p-4 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(59,130,246,0.7)]"
             >
-              <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none animate-neon-pulse pointer-events-none"></div>
-              <div className="relative z-10 flex items-center w-full p-3 sm:p-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <img
-                  src={hero.URL}
+                  src={getImageUrl(hero.URL)}
                   alt={`${hero.her} image`}
-                  className="w-10 sm:w-12 md:w-14 lg:w-16 h-10 sm:h-12 md:h-14 lg:h-16 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
+                  className="w-10 sm:w-12 md:w-14 h-10 sm:h-12 md:h-14 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse"
                   loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://via.placeholder.com/150?text=Image+Failed";
-                  }}
+                  onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/50?text=Hero")}
                 />
-                <h2 className="flex-1 text-center font-bold text-sm sm:text-base md:text-lg lg:text-xl text-blue-300 mx-4 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                <h2 className="font-bold text-sm sm:text-base md:text-lg text-blue-300 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
                   {hero.her}
                 </h2>
-                <Link
-                  to="/unlock-skin"
-                  onClick={() => handleViewClick(hero.her)}
-                  className="bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-1.5 sm:px-4 md:py-2 md:px-5 lg:py-2.5 lg:px-6 rounded-lg text-xs sm:text-sm md:text-base lg:text-lg font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
-                >
-                  View
-                </Link>
               </div>
+              <Link
+                to="/unlock-skin"
+                onClick={() => handleViewClick(hero.her)}
+                className="bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-1.5 sm:px-4 md:py-2 md:px-5 rounded-lg text-sm sm:text-sm md:text-base font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.8),0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
+              >
+                View
+              </Link>
             </div>
           ))}
         </div>
