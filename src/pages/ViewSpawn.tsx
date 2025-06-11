@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext, useCallback } from "react";
 import axios, { AxiosError } from "axios";
-import { FaArrowRight } from "react-icons/fa";
+import { FaAngleDoubleRight } from "react-icons/fa";
+import { ThemeContext } from "../components/ThemeContext";
+import { ThemeColors } from "../components/ThemeColors";
 
 interface SpawnData {
   id: string;
@@ -11,6 +13,8 @@ interface SpawnData {
 }
 
 const ViewSpawn: React.FC = () => {
+  const { isDarkMode, theme } = useContext(ThemeContext);
+  const { colors } = ThemeColors(theme, isDarkMode);
   const [spawns, setSpawns] = useState<SpawnData[]>([]);
   const [filteredSpawns, setFilteredSpawns] = useState<SpawnData[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -19,56 +23,58 @@ const ViewSpawn: React.FC = () => {
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-  useEffect(() => {
-    const fetchSpawns = async () => {
-      try {
-        const response = await axios.get(
-          "https://raw.githubusercontent.com/AgungDevlop/InjectorMl/main/Spawn.json"
-        );
-        const spawnsData = response.data;
-        if (!Array.isArray(spawnsData)) {
-          throw new Error("Spawn.json is not a valid array");
-        }
-        setSpawns(spawnsData);
-        setFilteredSpawns(spawnsData);
+  const preloadImages = useCallback((data: SpawnData[]) => {
+    data.forEach((spawn) => {
+      ['img1', 'img2'].forEach((imgType) => {
+        const img = new Image();
+        img.src = spawn[imgType as keyof SpawnData];
+        img.onload = () => {
+          setLoadedImages((prev) => new Set(prev).add(`${spawn.id}-${imgType}`));
+          clearTimeout(timeoutRefs.current.get(`${spawn.id}-${imgType}`));
+        };
+        img.onerror = () => {
+          setLoadedImages((prev) => new Set(prev).add(`${spawn.id}-${imgType}`));
+          clearTimeout(timeoutRefs.current.get(`${spawn.id}-${imgType}`));
+        };
+        const timeout = setTimeout(() => {
+          setLoadedImages((prev) => new Set(prev).add(`${spawn.id}-${imgType}`));
+        }, 3000);
+        timeoutRefs.current.set(`${spawn.id}-${imgType}`, timeout);
+      });
+    });
+  }, []);
 
-        spawnsData.forEach((spawn: SpawnData) => {
-          ['img1', 'img2'].forEach((imgType) => {
-            const img = new Image();
-            img.src = spawn[imgType as keyof SpawnData];
-            img.onload = () => {
-              setLoadedImages((prev) => new Set(prev).add(`${spawn.id}-${imgType}`));
-              clearTimeout(timeoutRefs.current.get(`${spawn.id}-${imgType}`));
-            };
-            img.onerror = () => {
-              setLoadedImages((prev) => new Set(prev).add(`${spawn.id}-${imgType}`));
-              clearTimeout(timeoutRefs.current.get(`${spawn.id}-${imgType}`));
-            };
-
-            const timeout = setTimeout(() => {
-              setLoadedImages((prev) => new Set(prev).add(`${spawn.id}-${imgType}`));
-            }, 5000);
-            timeoutRefs.current.set(`${spawn.id}-${imgType}`, timeout);
-          });
-        });
-      } catch (err) {
-        const errorMessage =
-          err instanceof AxiosError
-            ? `${err.message} (Status: ${err.response?.status})`
-            : "Unknown error";
-        setError(`Failed to fetch spawns: ${errorMessage}`);
-      } finally {
-        setIsLoading(false);
+  const fetchSpawns = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        "https://raw.githubusercontent.com/AgungDevlop/InjectorMl/main/Spawn.json",
+        { timeout: 5000 }
+      );
+      const spawnsData = response.data;
+      if (!Array.isArray(spawnsData)) {
+        throw new Error("Spawn.json is not a valid array");
       }
-    };
+      setSpawns(spawnsData);
+      setFilteredSpawns(spawnsData);
+      preloadImages(spawnsData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof AxiosError
+          ? `${err.message}${err.response ? ` (Status: ${err.response.status})` : ''}`
+          : "Unknown error";
+      setError(`Failed to fetch spawns: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [preloadImages]);
 
+  useEffect(() => {
     fetchSpawns();
-
     return () => {
       timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
       timeoutRefs.current.clear();
     };
-  }, []);
+  }, [fetchSpawns]);
 
   useEffect(() => {
     const filtered = spawns
@@ -79,116 +85,116 @@ const ViewSpawn: React.FC = () => {
     setFilteredSpawns(filtered);
   }, [searchQuery, spawns]);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-  };
+  }, []);
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 text-white">
+    <div className="container mx-auto p-2 sm:p-4">
       <style>
         {`
-          @keyframes pulse-ring {
-            0% { transform: scale(0.33); opacity: 1; }
-            80%, 100% { opacity: 0; }
+          @keyframes slide-in-right {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
           }
-          @keyframes pulse-dot {
-            0% { transform: scale(0.8); }
-            50% { transform: scale(1); }
-            100% { transform: scale(0.8); }
+          @keyframes fade-scroll {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
           }
-          .custom-spinner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+          .animate-slide-in-right {
+            animation: slide-in-right 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
           }
-          .custom-spinner::before {
-            content: '';
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 4px solid transparent;
-            border-top-color: #3b82f6;
-            animation: pulse-ring 1.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-            position: absolute;
+          .animate-fade-scroll {
+            animation: fade-scroll 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            animation-play-state: paused;
           }
-          .custom-spinner::after {
-            content: '';
-            width: 50%;
-            height: 50%;
-            background: #3b82f6;
-            border-radius: 50%;
-            animation: pulse-dot 1.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
-            position: absolute;
+          .animate-fade-scroll.visible {
+            animation-play-state: running;
           }
+          ${filteredSpawns.map((_, i) => `
+            .animate-delay-${i * 100} {
+              animation-delay: ${i * 0.1}s;
+            }
+          `).join('')}
         `}
       </style>
-      <h1 className="text-4xl sm:text-4xl md:text-5xl font-extrabold text-blue-400 mb-6 sm:mb-8 md:mb-10 tracking-tight text-center drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)]">
+      <h1 className={`text-2xl sm:text-3xl font-extrabold ${isDarkMode ? colors.primaryDark : colors.primaryLight} mb-4 text-center`}>
         View Spawns
       </h1>
-
-      <div className="mb-8">
+      <div className="mb-4">
         <input
           type="text"
           placeholder="Search by Spawn Name..."
           value={searchQuery}
           onChange={handleSearchChange}
-          className="w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 mb-4 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+          className={`w-full bg-transparent border-2 ${colors.border} ${isDarkMode ? colors.primaryDark : colors.primaryLight} rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[${colors.glow}] outline-none transition-colors duration-200`}
         />
       </div>
-
       {error && (
-        <div className="mb-8 p-6 bg-red-900/60 text-red-200 rounded-lg text-base backdrop-blur-sm border border-red-400/50 animate-neon-pulse">
+        <div className="mb-4 p-3 bg-red-900/60 text-red-200 rounded-lg text-sm border border-red-400/50">
           {error}
         </div>
       )}
-
       {isLoading ? (
         <div className="flex justify-center">
-          <div className="w-10 h-10 relative animate-ios-spinner">
-            <div className="absolute inset-0 rounded-full border-t-4 border-gray-400 opacity-20"></div>
-            <div className="absolute inset-0 rounded-full border-t-4 border-gray-400 animate-spin"></div>
-          </div>
+          <div className={`w-6 h-6 border-2 ${colors.border} rounded-full animate-spin`} />
         </div>
       ) : (
-        <div className="flex flex-col gap-4 sm:gap-6">
+        <div className="flex flex-col gap-2" ref={(el) => {
+          if (el) {
+            const items = el.querySelectorAll('.animate-fade-scroll');
+            const observer = new IntersectionObserver(
+              (entries) => {
+                entries.forEach((entry) => {
+                  if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                  }
+                });
+              },
+              { threshold: 0.2 }
+            );
+            items.forEach((item) => observer.observe(item));
+            return () => items.forEach((item) => observer.unobserve(item));
+          }
+        }}>
           {filteredSpawns.length === 0 && !error && (
-            <p className="text-center text-blue-300 text-lg sm:text-xl">
+            <p className={`text-center text-sm ${isDarkMode ? colors.primaryDark : colors.primaryLight}`}>
               No spawns found.
             </p>
           )}
-          {filteredSpawns.map((spawn) => (
+          {filteredSpawns.map((spawn, index) => (
             <div
               key={spawn.id}
-              className="flex items-center justify-between bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-2xl p-3 sm:p-4 md:p-5 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(59,130,246,0.8)]"
+              className={`flex items-center justify-between bg-transparent border-2 ${colors.border} rounded-lg shadow-md p-2 transition-all duration-200 hover:scale-[1.02] animate-slide-in-right animate-delay-${index * 100} animate-fade-scroll`}
             >
-              <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+              <div className="flex items-center gap-2">
                 {!loadedImages.has(`${spawn.id}-img1`) && (
-                  <div className="w-10 sm:w-12 md:w-16 h-10 sm:h-12 md:h-16 flex items-center justify-center">
-                    <div className="custom-spinner"></div>
+                  <div className="w-9 h-9 flex items-center justify-center">
+                    <div className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`} />
                   </div>
                 )}
                 <img
                   src={spawn.img1}
                   alt={`${spawn.name} img1`}
-                  className={`w-10 sm:w-12 md:w-16 h-10 sm:h-12 md:h-16 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse ${loadedImages.has(`${spawn.id}-img1`) ? '' : 'hidden'}`}
+                  className={`w-9 h-9 object-cover rounded-full border-2 ${colors.border} ${loadedImages.has(`${spawn.id}-img1`) ? '' : 'hidden'}`}
                   loading="lazy"
+                  decoding="async"
                 />
-                <FaArrowRight className="text-blue-300 mx-1 text-lg sm:text-xl md:text-2xl animate-neon-pulse" />
+                <FaAngleDoubleRight className={`text-base ${isDarkMode ? colors.primaryDark : colors.primaryLight}`} />
                 {!loadedImages.has(`${spawn.id}-img2`) && (
-                  <div className="w-10 sm:w-12 md:w-16 h-10 sm:h-12 md:h-16 flex items-center justify-center">
-                    <div className="custom-spinner"></div>
+                  <div className="w-9 h-9 flex items-center justify-center">
+                    <div className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`} />
                   </div>
                 )}
                 <img
                   src={spawn.img2}
                   alt={`${spawn.name} img2`}
-                  className={`w-10 sm:w-12 md:w-16 h-10 sm:h-12 md:h-16 object-cover rounded-full border-2 border-blue-400 animate-neon-pulse ${loadedImages.has(`${spawn.id}-img2`) ? '' : 'hidden'}`}
+                  className={`w-9 h-9 object-cover rounded-full border-2 ${colors.border} ${loadedImages.has(`${spawn.id}-img2`) ? '' : 'hidden'}`}
                   loading="lazy"
+                  decoding="async"
                 />
-                <h2 className="font-bold text-sm sm:text-base md:text-lg lg:text-xl text-blue-300 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
+                <h2 className={`font-bold text-sm ${isDarkMode ? colors.primaryDark : colors.primaryLight} truncate max-w-[120px] sm:max-w-[200px]`}>
                   {spawn.name}
                 </h2>
               </div>
@@ -196,7 +202,7 @@ const ViewSpawn: React.FC = () => {
                 href={spawn.url}
                 target="_blank"
                 rel="noreferrer"
-                className="bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 py-1.5 px-3 sm:py-2 sm:px-4 md:py-2.5 md:px-5 rounded-lg text-sm sm:text-sm md:text-base font-semibold border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_10px_rgba(59,130,246,0.8),0_0_20px_rgba(59,130,246,0.6)] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
+                className={`bg-transparent ${isDarkMode ? colors.primaryDark : colors.primaryLight} py-1 px-2 rounded-lg text-sm font-semibold border ${colors.border} hover:${isDarkMode ? colors.accentDark : colors.accentLight} transition-all duration-200`}
               >
                 Inject
               </a>

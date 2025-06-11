@@ -1,27 +1,62 @@
+import { useCallback, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaFistRaised, FaShieldAlt, FaMagic, FaCrosshairs, FaSkull, FaHandsHelping } from "react-icons/fa";
+import { ThemeContext } from "../components/ThemeContext";
+import { ThemeColors } from "../components/ThemeColors";
+
 const Banner: React.FC = () => {
-  const bannerUrl = "https://www.mobilelegends.com"; // Replace with your desired URL
+  const { isDarkMode, theme } = useContext(ThemeContext);
+  const { colors } = ThemeColors(theme, isDarkMode);
+  const navigate = useNavigate();
+
+  const handleRoleClick = useCallback((role: string) => {
+    sessionStorage.setItem("selectedRole", role);
+    window.dispatchEvent(new Event("storage"));
+    navigate("/view-hero");
+  }, [navigate]);
+
+  const roles = [
+    { name: "Assassin", icon: <FaSkull className="text-xl" />, color: `${isDarkMode ? 'text-red-500' : 'text-red-600'}` },
+    { name: "Fighter", icon: <FaFistRaised className="text-xl" />, color: `${isDarkMode ? 'text-orange-400' : 'text-orange-600'}` },
+    { name: "Marksman", icon: <FaCrosshairs className="text-xl" />, color: `${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}` },
+    { name: "Tank", icon: <FaShieldAlt className="text-xl" />, color: `${isDarkMode ? 'text-blue-400' : 'text-blue-600'}` },
+    { name: "Mage", icon: <FaMagic className="text-xl" />, color: `${isDarkMode ? colors.primaryDark : colors.primaryLight}` },
+    { name: "Support", icon: <FaHandsHelping className="text-xl" />, color: `${isDarkMode ? 'text-green-400' : 'text-green-600'}` },
+  ];
 
   return (
-    <a href={bannerUrl} target="_blank" rel="noopener noreferrer">
-      <div className="relative bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-xl shadow-xl overflow-hidden mb-6 sm:mb-8 md:mb-10 transform transition-all duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.7)] hover:scale-105">
-        <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-xl animate-neon-pulse pointer-events-none"></div>
-        <div className="relative z-10 p-4 sm:p-6 md:p-8 text-center">
-          <img
-            src="https://i.ibb.co/ch5pjFxW/Picsart-25-05-14-20-04-02-189.jpg"
-            alt="Banner"
-            className="w-full h-32 sm:h-40 md:h-48 object-cover rounded-md mb-3 sm:mb-4"
-            loading="lazy"
-          />
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-blue-300 mb-2 sm:mb-3 tracking-tight drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
-            Welcome to Skin Tools ML
-          </h2>
-          <p className="text-sm sm:text-base md:text-lg text-gray-300 max-w-2xl mx-auto">
-            Klik banner ini untuk cara menggunakan Injector ML di Android 13/14/15
-          </p>
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-20 rounded-xl"></div>
+    <div className="container mx-auto mb-5 mt-5 sm:p-3">
+      <style>
+        {`
+          @keyframes fade-in {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fade-in {
+            animation: fade-in 0.5s ease-out forwards;
+          }
+          ${roles.map((_, i) => `
+            .animate-delay-${i * 100} {
+              animation-delay: ${i * 0.1}s;
+            }
+          `).join('')}
+        `}
+      </style>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+        {roles.map((role, index) => (
+          <button
+            key={role.name}
+            onClick={() => handleRoleClick(role.name)}
+            className={`flex items-center gap-2 bg-transparent border-2 ${colors.border} rounded-lg p-2 sm:p-3 ${isDarkMode ? colors.primaryDark : colors.primaryLight} transition-all duration-200 hover:scale-[1.02] hover:${isDarkMode ? colors.accentDark : colors.accentLight} animate-fade-in animate-delay-${index * 100}`}
+          >
+            <span className={`${role.color} flex-shrink-0`}>{role.icon}</span>
+            <span className={`text-sm sm:text-base font-semibold ${isDarkMode ? colors.primaryDark : colors.primaryLight}`}>
+              {role.name}
+            </span>
+          </button>
+        ))}
       </div>
-    </a>
+    </div>
   );
 };
 

@@ -13,15 +13,16 @@ import ViewBattleEmote from "./pages/ViewBattleEmote";
 import ViewElimination from "./pages/ViewElimination";
 import SkinManipulate from "./pages/SkinManipulate";
 import ManageBattleEffect from "./pages/ManageBattleEffect";
-import ViewHero from "./pages/ViewHero"; // Import the new ViewHero component
+import ViewHero from "./pages/ViewHero";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { ThemeProvider } from "./components/ThemeContext";
 
 const ErrorFallback = (
   <div className="text-center text-red-500 p-4">
     <h1 className="text-2xl font-bold mb-2">Terjadi Kesalahan</h1>
     <p>Maaf, terjadi kesalahan yang tidak terduga.</p>
     <button
-      className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+      className="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded transition-colors duration-200"
       onClick={() => window.location.reload()}
     >
       Muat Ulang Halaman
@@ -96,8 +97,10 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <ErrorBoundary fallback={ErrorFallback}>
-      <RouterProvider router={router} />
-    </ErrorBoundary>
+    <ThemeProvider>
+      <ErrorBoundary fallback={ErrorFallback}>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
+    </ThemeProvider>
   </React.StrictMode>
 );

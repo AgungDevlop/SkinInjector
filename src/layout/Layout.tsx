@@ -1,71 +1,96 @@
-import { FaGamepad, FaTiktok, FaHome, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
-import { ReactNode } from 'react';
+import { FaGamepad, FaTiktok, FaHome, FaArrowLeft, FaArrowRight, FaMoon, FaSun } from 'react-icons/fa';
+import { ReactNode, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ParticlesBackground from '../components/ParticlesBackground';
+import { ThemeContext } from '../components/ThemeContext';
+import { ThemeColors } from '../components/ThemeColors';
 
 const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
+  const { isDarkMode, toggleDarkMode, theme, setTheme } = useContext(ThemeContext);
+  const { colors } = ThemeColors(theme, isDarkMode);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
+  const handleBack = () => navigate(-1);
+  const handleForward = () => navigate(1);
+  const handleHome = () => navigate('/');
 
-  const handleForward = () => {
-    navigate(1);
-  };
-
-  const handleHome = () => {
-    navigate('/');
-  };
+  const themeOptions = [
+    { value: 'cyberpurple', label: 'CyberPurple' },
+    { value: 'neonblue', label: 'NeonBlue' },
+    { value: 'electricpink', label: 'ElectricPink' },
+    { value: 'cosmicteal', label: 'CosmicTeal' },
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 via-blue-950 to-purple-950 relative overflow-hidden">
-      {/* Animated Background Effect */}
-      <div className="absolute inset-0 pointer-events-none animate-glitch">
-        <div className="absolute w-full h-full bg-gradient-to-b from-transparent via-blue-950/20 to-transparent animate-scanline"></div>
-      </div>
-
-      {/* Header */}
-      <header className="fixed top-0 left-0 w-full p-4 text-white flex items-center justify-between z-50 bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 backdrop-blur-md shadow-lg border-b-2 border-blue-400 animate-neon-pulse">
+    <div className={`flex flex-col min-h-screen ${isDarkMode ? colors.dark : colors.light} relative overflow-hidden`}>
+      <style>
+        {`
+          .custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='${encodeURIComponent(colors.glow)}' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px ${colors.glow};
+          }
+          .custom-select:hover, .custom-select:focus {
+            box-shadow: 0 0 10px ${colors.glow}, inset 0 0 3px ${colors.glow};
+            outline: none;
+          }
+          .custom-select option {
+            background: ${isDarkMode ? colors.dropdownBgDark : colors.dropdownBgLight};
+            color: ${isDarkMode ? colors.dropdownTextDark : colors.dropdownTextLight};
+          }
+        `}
+      </style>
+      <ParticlesBackground />
+      <header className={`fixed top-0 left-0 w-full p-2 ${isDarkMode ? colors.headerDark : colors.headerLight} flex items-center justify-between z-50 backdrop-blur-md shadow-md border-b-2 ${colors.border}`}>
         <div className="flex items-center group">
-          <FaGamepad className="mr-2 text-3xl text-blue-300 border-2 border-blue-400 rounded-full p-1 animate-neon-pulse group-hover:text-blue-200 group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-300" />
-          <h1 className="text-2xl font-extrabold tracking-tight text-blue-300 group-hover:text-blue-200 transition-colors duration-300 drop-shadow-[0_2px_4px_rgba(59,130,246,0.8)]">
-            Skin Tools ML
+          <FaGamepad className={`mr-1 text-xl ${isDarkMode ? colors.textDark : colors.textLight} border-2 ${colors.border} rounded-full p-0.5 group-hover:${isDarkMode ? colors.hoverDark : colors.hoverLight} transition-colors duration-200`} />
+          <h1 className={`text-lg font-extrabold tracking-tight ${isDarkMode ? colors.textDark : colors.textLight} group-hover:${isDarkMode ? colors.hoverDark : colors.hoverLight} transition-colors duration-200`}>
+            Neon Injector
           </h1>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center space-x-2">
+          <select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal')}
+            className={`custom-select p-1.5 text-sm font-semibold rounded-lg ${isDarkMode ? `${colors.dropdownBgDark} ${colors.dropdownTextDark}` : `${colors.dropdownBgLight} ${colors.dropdownTextLight}`} ${colors.dropdownBorder} focus:ring-0 outline-none transition-all duration-200 pr-6`}
+          >
+            {themeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={toggleDarkMode}
+            className={`p-1.5 rounded-full ${isDarkMode ? colors.buttonDark : colors.buttonLight} text-white transition-colors duration-200`}
+            aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDarkMode ? <FaSun className="text-sm" /> : <FaMoon className="text-sm" />}
+          </button>
           <button
             onClick={() => (window.location.href = 'https://www.tiktok.com/@yourusername')}
-            className="bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 text-blue-300 font-semibold p-2 rounded-xl border border-blue-400 animate-neon-pulse hover:bg-gradient-to-r hover:from-blue-950 hover:via-purple-950 hover:to-gray-900 hover:shadow-[0_0_10px_rgba(59,130,246,0.8),0_0_20px_rgba(59,130,246,0.6)] hover:scale-110 hover:animate-shake focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 transition-all duration-300"
+            className={`p-1.5 rounded-lg border ${colors.border} ${isDarkMode ? `${colors.textDark} ${colors.headerDark} ${colors.hoverDark}` : `${colors.textLight} ${colors.headerLight} ${colors.hoverLight}`} font-semibold transition-all duration-200 hover:scale-105 text-sm`}
           >
-            <FaTiktok className="text-xl" />
+            <FaTiktok className="text-sm" />
           </button>
         </div>
       </header>
-
-      {/* Main Content */}
-      <main className="flex-1 text-white pt-20 pb-16 relative z-10">
+      <main className={`flex-1 ${isDarkMode ? 'text-white' : 'text-gray-900'} pt-14 pb-14 relative z-10`}>
         {children}
       </main>
-
-      {/* Navigation Footer */}
-      <footer className="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-r from-gray-900 via-blue-950 to-purple-950 backdrop-blur-md shadow-lg border-t-2 border-blue-400 z-50 flex justify-around items-center">
-        <button
-          onClick={handleBack}
-          className="text-blue-300 hover:text-blue-200 transition-colors duration-300"
-        >
-          <FaArrowLeft className="text-2xl" />
+      <footer className={`fixed bottom-0 left-0 w-full p-2 ${isDarkMode ? colors.headerDark : colors.headerLight} backdrop-blur-md shadow-md border-t-2 ${colors.border} z-50 flex justify-around items-center`}>
+        <button onClick={handleBack} className={`${isDarkMode ? colors.textDark : colors.textLight} ${isDarkMode ? colors.hoverDark : colors.hoverLight} transition-colors duration-200`}>
+          <FaArrowLeft className="text-lg" />
         </button>
-        <button
-          onClick={handleHome}
-          className="text-blue-300 hover:text-blue-200 transition-colors duration-300"
-        >
-          <FaHome className="text-2xl" />
+        <button onClick={handleHome} className={`${isDarkMode ? colors.textDark : colors.textLight} ${isDarkMode ? colors.hoverDark : colors.hoverLight} transition-colors duration-200`}>
+          <FaHome className="text-lg" />
         </button>
-        <button
-          onClick={handleForward}
-          className="text-blue-300 hover:text-blue-200 transition-colors duration-300"
-        >
-          <FaArrowRight className="text-2xl" />
+        <button onClick={handleForward} className={`${isDarkMode ? colors.textDark : colors.textLight} ${isDarkMode ? colors.hoverDark : colors.hoverLight} transition-colors duration-200`}>
+          <FaArrowRight className="text-lg" />
         </button>
       </footer>
     </div>
