@@ -19,6 +19,10 @@ const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
     { value: 'neonblue', label: 'NeonBlue' },
     { value: 'electricpink', label: 'ElectricPink' },
     { value: 'cosmicteal', label: 'CosmicTeal' },
+    { value: 'solarorange', label: 'SolarOrange' },
+    { value: 'lunargreen', label: 'LunarGreen' },
+    { value: 'starred', label: 'StarRed' },
+    { value: 'galacticgold', label: 'GalacticGold' },
   ];
 
   return (
@@ -55,7 +59,7 @@ const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
         <div className="flex items-center space-x-2">
           <select
             value={theme}
-            onChange={(e) => setTheme(e.target.value as 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal')}
+            onChange={(e) => setTheme(e.target.value as 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal' | 'solarorange' | 'lunargreen' | 'starred' | 'galacticgold')}
             className={`custom-select p-1.5 text-sm font-semibold rounded-lg ${isDarkMode ? `${colors.dropdownBgDark} ${colors.dropdownTextDark}` : `${colors.dropdownBgLight} ${colors.dropdownTextLight}`} ${colors.dropdownBorder} focus:ring-0 outline-none transition-all duration-200 pr-6`}
           >
             {themeOptions.map((option) => (

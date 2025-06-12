@@ -3,8 +3,8 @@ import React, { createContext, useState, ReactNode } from 'react';
 interface ThemeContextType {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
-  theme: 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal';
-  setTheme: (theme: 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal') => void;
+  theme: 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal' | 'solarorange' | 'lunargreen' | 'starred' | 'galacticgold';
+  setTheme: (theme: 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal' | 'solarorange' | 'lunargreen' | 'starred' | 'galacticgold') => void;
 }
 
 export const ThemeContext = createContext<ThemeContextType>({
@@ -16,7 +16,7 @@ export const ThemeContext = createContext<ThemeContextType>({
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [theme, setTheme] = useState<'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal'>('cyberpurple');
+  const [theme, setTheme] = useState<'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal' | 'solarorange' | 'lunargreen' | 'starred' | 'galacticgold'>('cyberpurple');
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);

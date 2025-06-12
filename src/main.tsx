@@ -14,6 +14,8 @@ import ViewElimination from "./pages/ViewElimination";
 import SkinManipulate from "./pages/SkinManipulate";
 import ManageBattleEffect from "./pages/ManageBattleEffect";
 import ViewHero from "./pages/ViewHero";
+import PanelHero from "./pages/PanelHero";
+import ManageHero from "./pages/ManageHero";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./components/ThemeContext";
 
@@ -52,6 +54,11 @@ const router = createBrowserRouter([
         errorElement: ErrorFallback,
       },
       {
+        path: "PanelHero",
+        element: <PanelHero />,
+        errorElement: ErrorFallback,
+      },
+      {
         path: "SkinManipulate",
         element: <SkinManipulate />,
         errorElement: ErrorFallback,
@@ -59,6 +66,11 @@ const router = createBrowserRouter([
       {
         path: "ManageBattleEffect",
         element: <ManageBattleEffect />,
+        errorElement: ErrorFallback,
+      },
+      {
+        path: "ManageHero",
+        element: <ManageHero />,
         errorElement: ErrorFallback,
       },
       {
