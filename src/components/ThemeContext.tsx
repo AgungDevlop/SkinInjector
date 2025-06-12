@@ -1,4 +1,4 @@
-import React, { createContext, useState, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode } from 'react';
 
 interface ThemeContextType {
   isDarkMode: boolean;
@@ -15,11 +15,57 @@ export const ThemeContext = createContext<ThemeContextType>({
 });
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [theme, setTheme] = useState<'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal' | 'solarorange' | 'lunargreen' | 'starred' | 'galacticgold'>('cyberpurple');
+  const themes: ThemeContextType['theme'][] = [
+    'cyberpurple',
+    'neonblue',
+    'electricpink',
+    'cosmicteal',
+    'solarorange',
+    'lunargreen',
+    'starred',
+    'galacticgold',
+  ];
+
+  const getRandomTheme = (): ThemeContextType['theme'] => themes[Math.floor(Math.random() * themes.length)];
+
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('darkMode');
+      return saved !== null ? JSON.parse(saved) as boolean : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [theme, setTheme] = useState<ThemeContextType['theme']>(() => {
+    try {
+      const saved = localStorage.getItem('theme');
+      return saved && themes.includes(saved as ThemeContextType['theme'])
+        ? saved as ThemeContextType['theme']
+        : getRandomTheme();
+    } catch {
+      return 'cyberpurple';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('theme', theme);
+    } catch {
+      console.warn('Failed to save theme to localStorage');
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+    } catch {
+      console.warn('Failed to save darkMode to localStorage');
+    }
+  }, [isDarkMode]);
 
   const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
+    setIsDarkMode((prev: boolean) => !prev);
   };
 
   return (
