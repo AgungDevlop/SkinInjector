@@ -1,16 +1,16 @@
 import { useState, useEffect, ChangeEvent } from "react";
 import axios, { AxiosError } from "axios";
+import { v4 as uuidv4 } from "uuid";
 
 interface HeroData {
+  id: string;
   her: string;
   roll: string;
   URL: string | null;
 }
 
-const roleTypes = ["Assassin", "Tank", "Fighter", "Mage", "Support"];
+const roleTypes = ["Assassin", "Tank", "Fighter", "Mage", "Marksman", "Support"];
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-const GITHUB_UPLOAD_THRESHOLD = 25 * 1024 * 1024; // 25MB
-const API_TOKEN = "AgungDeveloper";
 
 const ManageHero: React.FC = () => {
   const [heroes, setHeroes] = useState<HeroData[]>([]);
@@ -24,6 +24,7 @@ const ManageHero: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editHero, setEditHero] = useState<HeroData | null>(null);
   const [formData, setFormData] = useState<HeroData>({
+    id: "",
     her: "",
     roll: "Assassin",
     URL: null,
@@ -55,13 +56,12 @@ const ManageHero: React.FC = () => {
 
     const fetchHeroes = async (): Promise<void> => {
       try {
-        const jsonFileName = "Hero.json";
         const response = await axios.get<{ content: string; sha: string }>(
-          `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${jsonFileName}`,
+          `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/Hero.json`,
           { headers: { Authorization: `Bearer ${apiToken}` } }
         );
         const content = atob(response.data.content);
-        const heroesData: HeroData[] = JSON.parse(content);
+        const heroesData = JSON.parse(content);
         setHeroes(heroesData);
         setFilteredHeroes(heroesData);
       } catch (err) {
@@ -76,12 +76,12 @@ const ManageHero: React.FC = () => {
 
   useEffect(() => {
     const filtered = heroes.filter((hero) => {
-      const matchesName = hero.her.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesRole = !roleFilter || hero.roll === roleFilter;
-      return matchesName && matchesRole;
+      const matchesSearch = hero.her.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRole = !roleFilter || hero.roll.toLowerCase() === roleFilter.toLowerCase();
+      return matchesSearch && matchesRole;
     });
     setFilteredHeroes(filtered);
-  }, [heroes, searchQuery, roleFilter]);
+  }, [searchQuery, roleFilter, heroes]);
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>): void => {
     setSearchQuery(e.target.value);
@@ -110,13 +110,13 @@ const ManageHero: React.FC = () => {
     newFileName: string,
     base64Content: string
   ): Promise<string | null> => {
-    const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/heroImages/${newFileName}`;
+    const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/hero_images/${newFileName}`;
 
     try {
       const response = await axios.put<{ content: { download_url: string } }>(
         uploadUrl,
         {
-          message: `Upload ${newFileName} to heroImages`,
+          message: `Upload ${newFileName} to hero_images`,
           content: base64Content,
         },
         {
@@ -144,52 +144,6 @@ const ManageHero: React.FC = () => {
     }
   };
 
-  const uploadToCustomApi = async (file: File): Promise<string | null> => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const xhr = new XMLHttpRequest();
-    xhr.upload.addEventListener("progress", (event) => {
-      if (event.lengthComputable) {
-        const percentComplete = Math.round((event.loaded / event.total) * 100);
-        setUploadProgress(percentComplete);
-      }
-    });
-
-    xhr.open("POST", "https://skinml.agungbot.my.id/api.php", true);
-    xhr.setRequestHeader("Authorization", `Bearer ${API_TOKEN}`);
-
-    return new Promise((resolve) => {
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            if (response.url) {
-              setUploadProgress(0);
-              resolve(response.url);
-            } else {
-              setError("Failed to get file URL from API for Hero Image.");
-              resolve(null);
-            }
-          } catch (parseError) {
-            setError("Invalid response from API for Hero Image.");
-            resolve(null);
-          }
-        } else {
-          setError(`Failed to upload Hero Image to API: ${xhr.statusText || "Unknown error"}`);
-          resolve(null);
-        }
-      };
-
-      xhr.onerror = () => {
-        setError("Network error while uploading Hero Image to API.");
-        resolve(null);
-      };
-
-      xhr.send(formData);
-    });
-  };
-
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = e.target.files?.[0];
     if (!file || !validateFile(file)) return;
@@ -205,45 +159,32 @@ const ManageHero: React.FC = () => {
     }
 
     setImageFile(file);
-
-    const randomId = Math.random().toString(36).substring(2, 8);
+    const randomId = uuidv4().slice(0, 8);
     const extension = file.name.split(".").pop() ?? "";
     const newFileName = `${file.name.replace(`.${extension}`, "")}_${randomId}.${extension}`;
 
-    let fileUrl: string | null = null;
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      if (typeof reader.result !== "string") {
+        setError("Failed to read file content.");
+        return;
+      }
+      const base64Content = reader.result.split(",")[1];
+      if (!base64Content) {
+        setError("Failed to read file content.");
+        return;
+      }
 
-    if (file.size > GITHUB_UPLOAD_THRESHOLD) {
-      fileUrl = await uploadToCustomApi(file);
-    } else {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        if (typeof reader.result !== "string") {
-          setError("Failed to read file content.");
-          return;
-        }
-        const base64Content = reader.result.split(",")[1];
-        if (!base64Content) {
-          setError("Failed to read file content.");
-          return;
-        }
-
-        fileUrl = await uploadToGitHub(newFileName, base64Content);
-        if (fileUrl) {
-          setFormData((prev) => ({ ...prev, URL: fileUrl }));
-          setError("");
-        }
-      };
-      reader.onerror = () => {
-        setError("Error reading file.");
-      };
-      return;
-    }
-
-    if (fileUrl) {
-      setFormData((prev) => ({ ...prev, URL: fileUrl }));
-      setError("");
-    }
+      const fileUrl = await uploadToGitHub(newFileName, base64Content);
+      if (fileUrl) {
+        setFormData((prev) => ({ ...prev, URL: fileUrl }));
+        setError("");
+      }
+    };
+    reader.onerror = () => {
+      setError("Error reading file.");
+    };
   };
 
   const openEditModal = (hero: HeroData): void => {
@@ -257,8 +198,7 @@ const ManageHero: React.FC = () => {
   const closeModal = (): void => {
     setIsModalOpen(false);
     setEditHero(null);
-    setFormData({ her: "", roll: "Assassin", URL: null });
-    setImageFile(null);
+    setFormData({ id: "", her: "", roll: "Assassin", URL: null });
     setError("");
     setSuccess("");
   };
@@ -274,9 +214,8 @@ const ManageHero: React.FC = () => {
       return;
     }
 
-    const updatedHero: HeroData = { ...formData };
-    const jsonFileName = "Hero.json";
-    const heroJsonUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${jsonFileName}`;
+    const updatedHero: HeroData = { ...formData, id: editHero.id };
+    const heroJsonUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/Hero.json`;
 
     try {
       const response = await axios.get<{ content: string; sha: string }>(heroJsonUrl, {
@@ -285,13 +224,13 @@ const ManageHero: React.FC = () => {
       const currentHeroes: HeroData[] = JSON.parse(atob(response.data.content));
       const sha = response.data.sha;
       const updatedHeroes = currentHeroes.map((hero) =>
-        hero.her === editHero.her ? updatedHero : hero
+        hero.id === editHero.id ? updatedHero : hero
       );
 
       await axios.put(
         heroJsonUrl,
         {
-          message: `Update hero: ${updatedHero.her}`,
+          message: `Update hero ID ${editHero.id}: ${updatedHero.her}`,
           content: btoa(JSON.stringify(updatedHeroes, null, 2)),
           sha,
         },
@@ -301,8 +240,10 @@ const ManageHero: React.FC = () => {
       );
 
       setHeroes(updatedHeroes);
-      setFilteredHeroes(updatedHeroes);
-      setSuccess("Hero updated successfully!");
+      setFilteredHeroes((prev) =>
+        prev.map((hero) => (hero.id === editHero.id ? updatedHero : hero))
+      );
+      setSuccess(`Hero updated successfully!`);
       closeModal();
     } catch (err) {
       const errorMessage =
@@ -311,18 +252,17 @@ const ManageHero: React.FC = () => {
               err.response?.data
             )})`
           : "Unknown error";
-      setError(`Failed to update ${jsonFileName}: ${errorMessage}`);
+      setError(`Failed to update Hero.json: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (her: string): Promise<void> => {
+  const handleDelete = async (id: string): Promise<void> => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    const jsonFileName = "Hero.json";
-    const heroJsonUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${jsonFileName}`;
+    const heroJsonUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/Hero.json`;
 
     try {
       const response = await axios.get<{ content: string; sha: string }>(heroJsonUrl, {
@@ -330,12 +270,12 @@ const ManageHero: React.FC = () => {
       });
       const currentHeroes: HeroData[] = JSON.parse(atob(response.data.content));
       const sha = response.data.sha;
-      const updatedHeroes = currentHeroes.filter((hero) => hero.her !== her);
+      const updatedHeroes = currentHeroes.filter((hero) => hero.id !== id);
 
       await axios.put(
         heroJsonUrl,
         {
-          message: `Delete hero: ${her}`,
+          message: `Delete hero ID: ${id}`,
           content: btoa(JSON.stringify(updatedHeroes, null, 2)),
           sha,
         },
@@ -346,7 +286,7 @@ const ManageHero: React.FC = () => {
 
       setHeroes(updatedHeroes);
       setFilteredHeroes(updatedHeroes);
-      setSuccess("Hero deleted successfully!");
+      setSuccess(`Hero deleted successfully!`);
     } catch (err) {
       const errorMessage =
         err instanceof AxiosError
@@ -415,14 +355,21 @@ const ManageHero: React.FC = () => {
             <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4">
               {filteredHeroes.map((hero) => (
                 <div
-                  key={hero.her}
+                  key={hero.id}
                   className="relative bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950 border-2 border-blue-400 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none shadow-xl overflow-hidden"
                 >
                   <div className="absolute inset-0 border-2 border-blue-400 opacity-30 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-none animate-neon-pulse pointer-events-none"></div>
                   <div className="relative z-10 p-4">
                     <h3 className="text-lg font-bold text-blue-300 mb-2">{hero.her}</h3>
-                    <p className="text-sm text-blue-400 mb-4">Role: {hero.roll}</p>
-                    <div className="flex space-x-2">
+                    <p className="text-sm text-blue-400 mb-2">{hero.roll}</p>
+                    {hero.URL && (
+                      <img
+                        src={hero.URL}
+                        alt={hero.her}
+                        className="w-full h-32 object-cover mb-4 rounded-lg border-2 border-blue-600"
+                      />
+                    )}
+                    <div className="flex space-x-2 mt-4">
                       <button
                         type="button"
                         onClick={() => openEditModal(hero)}
@@ -433,7 +380,7 @@ const ManageHero: React.FC = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(hero.her)}
+                        onClick={() => handleDelete(hero.id)}
                         className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 hover:shadow-[0_0_10px_rgba(239,68,68,0.8)] transition-all duration-300 disabled:opacity-50"
                         disabled={isSubmitting}
                       >

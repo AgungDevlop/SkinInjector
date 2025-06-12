@@ -5,22 +5,20 @@ import { useNavigate } from "react-router-dom";
 
 interface HeroData {
   id: string;
-  name: string;
-  role: string;
-  imageUrl: string | null;
+  her: string;
+  roll: string;
+  URL: string | null;
 }
 
-const roleTypes = ["Assassin", "Tank", "Fighter", "Mage", "Support"];
+const roleTypes = ["Assassin", "Tank", "Fighter", "Mage", "Marksman", "Support"];
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-const GITHUB_UPLOAD_THRESHOLD = 25 * 1024 * 1024; // 25MB
-const API_TOKEN = "AgungDeveloper";
 
 const PanelHero: React.FC = () => {
   const [formData, setFormData] = useState<HeroData>({
     id: "",
-    name: "",
-    role: "Assassin",
-    imageUrl: null,
+    her: "",
+    roll: "Assassin",
+    URL: null,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -70,13 +68,13 @@ const PanelHero: React.FC = () => {
     newFileName: string,
     base64Content: string
   ): Promise<string | null> => {
-    const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/heroImages/${newFileName}`;
+    const uploadUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/hero_images/${newFileName}`;
 
     try {
       const response = await axios.put<{ content: { download_url: string } }>(
         uploadUrl,
         {
-          message: `Upload ${newFileName} to heroImages`,
+          message: `Upload ${newFileName} to hero_images`,
           content: base64Content,
         },
         {
@@ -104,52 +102,6 @@ const PanelHero: React.FC = () => {
     }
   };
 
-  const uploadToCustomApi = async (file: File): Promise<string | null> => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const xhr = new XMLHttpRequest();
-    xhr.upload.addEventListener("progress", (event) => {
-      if (event.lengthComputable) {
-        const percentComplete = Math.round((event.loaded / event.total) * 100);
-        setUploadProgress(percentComplete);
-      }
-    });
-
-    xhr.open("POST", "https://skinml.agungbot.my.id/api.php", true);
-    xhr.setRequestHeader("Authorization", `Bearer ${API_TOKEN}`);
-
-    return new Promise((resolve) => {
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            if (response.url) {
-              setUploadProgress(0);
-              resolve(response.url);
-            } else {
-              setError("Failed to get file URL from API for Hero Image.");
-              resolve(null);
-            }
-          } catch (parseError) {
-            setError("Invalid response from API for Hero Image.");
-            resolve(null);
-          }
-        } else {
-          setError(`Failed to upload Hero Image to API: ${xhr.statusText || "Unknown error"}`);
-          resolve(null);
-        }
-      };
-
-      xhr.onerror = () => {
-        setError("Network error while uploading Hero Image to API.");
-        resolve(null);
-      };
-
-      xhr.send(formData);
-    });
-  };
-
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = e.target.files?.[0];
     if (!file || !validateFile(file)) return;
@@ -165,45 +117,32 @@ const PanelHero: React.FC = () => {
     }
 
     setImageFile(file);
-
     const randomId = uuidv4().slice(0, 8);
     const extension = file.name.split(".").pop() ?? "";
     const newFileName = `${file.name.replace(`.${extension}`, "")}_${randomId}.${extension}`;
 
-    let fileUrl: string | null = null;
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      if (typeof reader.result !== "string") {
+        setError("Failed to read file content.");
+        return;
+      }
+      const base64Content = reader.result.split(",")[1];
+      if (!base64Content) {
+        setError("Failed to read file content.");
+        return;
+      }
 
-    if (file.size > GITHUB_UPLOAD_THRESHOLD) {
-      fileUrl = await uploadToCustomApi(file);
-    } else {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        if (typeof reader.result !== "string") {
-          setError("Failed to read file content.");
-          return;
-        }
-        const base64Content = reader.result.split(",")[1];
-        if (!base64Content) {
-          setError("Failed to read file content.");
-          return;
-        }
-
-        fileUrl = await uploadToGitHub(newFileName, base64Content);
-        if (fileUrl) {
-          setFormData((prev) => ({ ...prev, imageUrl: fileUrl }));
-          setError("");
-        }
-      };
-      reader.onerror = () => {
-        setError("Error reading file.");
-      };
-      return;
-    }
-
-    if (fileUrl) {
-      setFormData((prev) => ({ ...prev, imageUrl: fileUrl }));
-      setError("");
-    }
+      const fileUrl = await uploadToGitHub(newFileName, base64Content);
+      if (fileUrl) {
+        setFormData((prev) => ({ ...prev, URL: fileUrl }));
+        setError("");
+      }
+    };
+    reader.onerror = () => {
+      setError("Error reading file.");
+    };
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
@@ -213,7 +152,7 @@ const PanelHero: React.FC = () => {
     setSuccess("");
     setIsSubmitting(true);
 
-    if (!formData.name || !formData.role || !formData.imageUrl) {
+    if (!formData.her || !formData.roll || !formData.URL) {
       setError("All fields are required!");
       setIsSubmitting(false);
       return;
@@ -225,14 +164,14 @@ const PanelHero: React.FC = () => {
       return;
     }
 
-    const { id, ...formDataWithoutId } = formData;
     const newHero: HeroData = {
       id: uuidv4().slice(0, 10),
-      ...formDataWithoutId,
+      her: formData.her,
+      roll: formData.roll,
+      URL: formData.URL,
     };
 
-    const jsonFileName = "Hero.json";
-    const heroJsonUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/${jsonFileName}`;
+    const heroJsonUrl = `https://api.github.com/repos/AgungDevlop/InjectorMl/contents/Hero.json`;
 
     try {
       let currentHeroes: HeroData[] = [];
@@ -242,12 +181,10 @@ const PanelHero: React.FC = () => {
           headers: { Authorization: `Bearer ${apiToken}` },
         });
         if (response.data.content) {
-          currentHeroes = JSON.parse(atob(response.data.content)).map((hero: any) => ({
-            id: uuidv4().slice(0, 10),
-            name: hero.her,
-            role: hero.roll,
-            imageUrl: hero.URL,
-          }));
+          currentHeroes = JSON.parse(atob(response.data.content));
+          if (!Array.isArray(currentHeroes)) {
+            throw new Error("Hero.json is not a valid array");
+          }
           sha = response.data.sha;
         }
       } catch (fetchErr) {
@@ -263,7 +200,7 @@ const PanelHero: React.FC = () => {
       await axios.put(
         heroJsonUrl,
         {
-          message: `Add new hero: ${newHero.name}`,
+          message: `Add new hero ID ${newHero.id}: ${newHero.her}`,
           content: btoa(JSON.stringify(updatedHeroes, null, 2)),
           sha,
         },
@@ -277,9 +214,9 @@ const PanelHero: React.FC = () => {
 
       setFormData({
         id: "",
-        name: "",
-        role: "Assassin",
-        imageUrl: null,
+        her: "",
+        roll: "Assassin",
+        URL: null,
       });
       setImageFile(null);
       setUploadProgress(0);
@@ -291,7 +228,7 @@ const PanelHero: React.FC = () => {
               err.response?.data
             )})`
           : "Unknown error";
-      setError(`Failed to update ${jsonFileName}: ${errorMessage}`);
+      setError(`Failed to update Hero.json: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -317,15 +254,15 @@ const PanelHero: React.FC = () => {
         <div>
           <label
             className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
-            htmlFor="name"
+            htmlFor="her"
           >
             Hero Name
           </label>
           <input
-            id="name"
+            id="her"
             type="text"
-            name="name"
-            value={formData.name}
+            name="her"
+            value={formData.her}
             onChange={handleInputChange}
             className="block w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)] disabled:opacity-50"
             required
@@ -335,14 +272,14 @@ const PanelHero: React.FC = () => {
         <div>
           <label
             className="block text-sm font-medium text-blue-300 mb-2 drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]"
-            htmlFor="role"
+            htmlFor="roll"
           >
             Role
           </label>
           <select
-            id="role"
-            name="role"
-            value={formData.role}
+            id="roll"
+            name="roll"
+            value={formData.roll}
             onChange={handleInputChange}
             className="block w-full bg-gray-900/50 border border-blue-400 text-blue-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-300 hover:shadow-[0_0_10px_rgba(59,130,246,0.5)] disabled:opacity-50"
             disabled={isSubmitting}
@@ -390,9 +327,9 @@ const PanelHero: React.FC = () => {
               </p>
             </div>
           )}
-          {formData.imageUrl && (
+          {formData.URL && (
             <p className="mt-2 text-sm text-blue-400 truncate drop-shadow-[0_1px_2px_rgba(59,130,246,0.8)]">
-              Uploaded: {formData.imageUrl}
+              Uploaded: {formData.URL}
             </p>
           )}
         </div>

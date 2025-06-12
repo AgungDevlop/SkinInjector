@@ -26,7 +26,7 @@ const ViewHero: React.FC = () => {
 
   const fetchHeroes = useCallback(async () => {
     try {
-      const response = await axios.get("https://ml.anehgaminginjector.click/list.json", { timeout: 5000 });
+      const response = await axios.get("https://raw.githubusercontent.com/AgungDevlop/InjectorMl/refs/heads/main/Hero.json", { timeout: 5000 });
       const heroesData = response.data;
       if (!Array.isArray(heroesData)) {
         throw new Error("Invalid data format: Expected an array");
