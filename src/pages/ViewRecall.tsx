@@ -204,7 +204,7 @@ const ViewRecall: React.FC = () => {
                 rel="noreferrer"
                 className={`bg-transparent ${isDarkMode ? colors.primaryDark : colors.primaryLight} py-1 px-2 rounded-lg text-sm font-semibold border ${colors.border} hover:${isDarkMode ? colors.accentDark : colors.accentLight} transition-all duration-200`}
               >
-                Inject
+                Pasang
               </a>
             </div>
           ))}
