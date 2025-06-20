@@ -65,7 +65,7 @@ const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
         <div className="flex items-center group">
           <FaGamepad className={`mr-1.5 text-lg ${isDarkMode ? colors.textDark : colors.textLight} border-2 ${colors.border} rounded-full p-0.5 group-hover:${isDarkMode ? colors.hoverDark : colors.hoverLight} transition-all duration-300`} />
           <h1 className={`text-base font-bold tracking-tight ${isDarkMode ? colors.textDark : colors.textLight} group-hover:${isDarkMode ? colors.hoverDark : colors.hoverLight} transition-all duration-300 sm:text-lg`}>
-            Neon Injector
+            Neon Visual App
           </h1>
         </div>
         <div className="flex items-center space-x-2">
