@@ -15,21 +15,66 @@ interface SkinData {
   url: string;
 }
 
+interface ProgressState {
+  isVisible: boolean;
+  percentage: number;
+  status: string;
+  error?: string;
+}
+
 const ViewSkin: React.FC = () => {
   const { isDarkMode, theme } = useContext(ThemeContext);
   const { colors } = ThemeColors(theme, isDarkMode);
   const [skins, setSkins] = useState<SkinData[]>([]);
   const [filteredSkins, setFilteredSkins] = useState<SkinData[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [selectedHero, setSelectedHero] = useState<string | null>(null);
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  const [progress, setProgress] = useState<ProgressState>({
+    isVisible: false,
+    percentage: 0,
+    status: "",
+  });
   const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    (window as any).updateProgress = (data: {
+      percentage: number;
+      status: string;
+      error?: string;
+    }) => {
+      if (data.status === "Downloading..." || data.status === "Extracting..." || data.status === "Completed" || (data.status === "Error" && data.error)) {
+        setProgress({
+          isVisible: true,
+          percentage: Math.min(data.percentage, 100),
+          status: data.status,
+          error: data.error,
+        });
+      } else if (data.status === "Error" && !data.error) {
+        setProgress((prev) => ({ ...prev, isVisible: false }));
+      }
+    };
+
+    return () => {
+      delete (window as any).updateProgress;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (progress.status === "Completed") {
+      const timer = setTimeout(() => {
+        setProgress((prev) => ({ ...prev, isVisible: false }));
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [progress.status]);
 
   const getImageUrl = useCallback((url: string): string => {
     try {
-      const decodedUrl = url.replace(/\\+/g, '');
+      const decodedUrl = url.replace(/\\+/g, "");
       if (decodedUrl.includes("static.wikia.nocookie.net")) {
         return decodedUrl.split("/revision/latest")[0];
       }
@@ -40,12 +85,16 @@ const ViewSkin: React.FC = () => {
   }, []);
 
   const preloadImages = useCallback((skinsData: SkinData[]) => {
+    timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
+    timeoutRefs.current.clear();
+    setLoadedImages(new Set());
+
     skinsData.forEach((skin) => {
-      const imgTypes: ('img1' | 'img2')[] = ['img1', 'img2'];
+      const imgTypes: ("img1" | "img2")[] = ["img1", "img2"];
       imgTypes.forEach((imgType) => {
         const img = new Image();
         const imgSrc = skin[imgType];
-        if (typeof imgSrc === 'string') {
+        if (typeof imgSrc === "string") {
           img.src = getImageUrl(imgSrc);
           img.onload = () => {
             setLoadedImages((prev) => new Set(prev).add(`${skin.id}-${imgType}`));
@@ -64,7 +113,17 @@ const ViewSkin: React.FC = () => {
     });
   }, [getImageUrl]);
 
-  const fetchSkins = useCallback(async () => {
+  const fetchSkins = useCallback(async (hero: string | null) => {
+    if (!hero) {
+      setSkins([]);
+      setFilteredSkins([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
     try {
       const response = await axios.get(
         "https://raw.githubusercontent.com/AgungDevlop/InjectorMl/main/Skin.json",
@@ -74,15 +133,22 @@ const ViewSkin: React.FC = () => {
       if (!Array.isArray(skinsData)) {
         throw new Error("Skin.json is not a valid array");
       }
-      setSkins(skinsData);
-      setFilteredSkins(skinsData);
-      preloadImages(skinsData);
+
+      const filteredSkinsData = skinsData
+        .filter((skin: SkinData) => skin.hero === hero)
+        .sort((a: SkinData, b: SkinData) => a.name.localeCompare(b.name));
+
+      setSkins(filteredSkinsData);
+      setFilteredSkins(filteredSkinsData);
+      preloadImages(filteredSkinsData);
     } catch (err) {
       const errorMessage =
         err instanceof AxiosError
-          ? `${err.message}${err.response ? ` (Status: ${err.response.status})` : ''}`
+          ? `${err.message}${err.response ? ` (Status: ${err.response.status})` : ""}`
           : "Unknown error";
-      setError(`Failed to fetch skins: ${errorMessage}`);
+      setError(`Gagal mengambil skin: ${errorMessage}`);
+      setSkins([]);
+      setFilteredSkins([]);
     } finally {
       setIsLoading(false);
     }
@@ -91,31 +157,60 @@ const ViewSkin: React.FC = () => {
   useEffect(() => {
     const hero = sessionStorage.getItem("selectedHero");
     setSelectedHero(hero);
-    fetchSkins();
+    fetchSkins(hero);
 
     return () => {
       timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
       timeoutRefs.current.clear();
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
     };
   }, [fetchSkins]);
 
   useEffect(() => {
-    const filtered = skins
-      .filter((skin) => {
-        const matchesHero = selectedHero ? skin.hero === selectedHero : true;
-        const matchesSearch = skin.name.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesHero && matchesSearch;
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
-    setFilteredSkins(filtered);
-  }, [skins, selectedHero, searchQuery]);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    searchTimeoutRef.current = setTimeout(() => {
+      const filtered = skins
+        .filter((skin) =>
+          skin.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .sort((a, b) => a.name.localeCompare(b.name));
+      setFilteredSkins(filtered);
+      preloadImages(filtered);
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [skins, searchQuery, preloadImages]);
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+    },
+    []
+  );
+
+  const handleInstallClick = useCallback((url: string) => {
+    if ((window as any).Android) {
+      setProgress({ isVisible: false, percentage: 0, status: "" });
+      (window as any).Android.startDownload(url);
+    } else {
+      // Fallback untuk aplikasi tanpa WebView App Interface
+      const message = `Antarmuka Android tidak tersedia. Silakan unduh file secara manual dari:\n${url}`;
+      alert(message); // Notifikasi sederhana untuk pengguna
+      window.open(url, "_blank"); // Buka URL di tab baru untuk unduhan manual
+    }
   }, []);
 
   return (
-    <div className="container mx-auto p-2 sm:p-4">
+    <div className="container mx-auto p-2 sm:p-4 relative">
       <style>
         {`
           @keyframes slide-in-right {
@@ -125,6 +220,19 @@ const ViewSkin: React.FC = () => {
           @keyframes fade-scroll {
             0% { transform: translateY(20px); opacity: 0; }
             100% { transform: translateY(0); opacity: 1; }
+          }
+          @keyframes fade-in {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+          }
+          @keyframes fade-out {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.9); }
+          }
+          @keyframes pulse-glow {
+            0% { box-shadow: 0 0 10px rgba(${hexToRgb(colors.glow).join(', ')}, 0.3), 0 0 20px rgba(${hexToRgb(colors.glow).join(', ')}, 0.1); }
+            50% { box-shadow: 0 0 20px rgba(${hexToRgb(colors.glow).join(', ')}, 0.6), 0 0 30px rgba(${hexToRgb(colors.glow).join(', ')}, 0.3); }
+            100% { box-shadow: 0 0 10px rgba(${hexToRgb(colors.glow).join(', ')}, 0.3), 0 0 20px rgba(${hexToRgb(colors.glow).join(', ')}, 0.1); }
           }
           .animate-slide-in-right {
             animation: slide-in-right 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
@@ -136,23 +244,164 @@ const ViewSkin: React.FC = () => {
           .animate-fade-scroll.visible {
             animation-play-state: running;
           }
-          ${filteredSkins.map((_, i) => `
+          .progress-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+            will-change: opacity, transform;
+          }
+          .progress-container {
+            background: ${isDarkMode ? 'linear-gradient(135deg, #1a1a1a, #2d2d2d)' : 'linear-gradient(135deg, #ffffff, #f5f5f5)'};
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4), 0 0 40px rgba(${hexToRgb(colors.glow).join(', ')}, 0.1);
+            width: 90%;
+            max-width: 420px;
+            text-align: center;
+            border: 2px solid ${colors.border};
+            animation: fade-in 0.4s ease-out forwards;
+            will-change: transform, opacity;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+          }
+          .progress-container.out {
+            animation: fade-out 0.4s ease-out forwards;
+          }
+          .progress-circle-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+          }
+          .progress-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+              ${colors.glow} ${progress.percentage}%,
+              ${isDarkMode ? '#333' : '#e0e0e0'} ${progress.percentage}%
+            );
+            transition: background 0.3s ease-out;
+          }
+          .progress-circle-inner {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: ${isDarkMode ? 'linear-gradient(135deg, #1a1a1a, #2d2d2d)' : 'linear-gradient(135deg, #ffffff, #f0f0f0)'};
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: ${isDarkMode ? colors.textDark : colors.textLight};
+            text-shadow: 0 0 6px ${isDarkMode ? `rgba(${hexToRgb(colors.glow).join(', ')}, 0.7)` : `rgba(${hexToRgb(colors.glow).join(', ')}, 0.7)`};
+          }
+          .info-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: ${isDarkMode ? colors.textDark : colors.textLight};
+            text-shadow: 0 0 6px ${isDarkMode ? `rgba(${hexToRgb(colors.glow).join(', ')}, 0.7)` : `rgba(${hexToRgb(colors.glow).join(', ')}, 0.7)`};
+            margin-bottom: 16px;
+            transition: color 0.3s ease;
+          }
+          .warning-text {
+            font-size: 14px;
+            color: ${isDarkMode ? '#a0a0a0' : '#757575'};
+            text-align: left;
+            line-height: 1.6;
+            text-shadow: 0 0 4px ${isDarkMode ? `rgba(${hexToRgb(colors.glow).join(', ')}, 0.4)` : `rgba(${hexToRgb(colors.glow).join(', ')}, 0.4)`};
+            margin-top: 8px;
+            transition: color 0.3s ease;
+          }
+          .error-text {
+            font-size: 14px;
+            color: #ff4d4d;
+            text-align: center;
+            margin-top: 16px;
+            text-shadow: 0 0 6px rgba(255, 77, 77, 0.6);
+            transition: color 0.3s ease;
+          }
+          ${filteredSkins.map(
+            (_, i) => `
             .animate-delay-${i * 100} {
               animation-delay: ${i * 0.1}s;
             }
-          `).join('')}
+          `
+          ).join("")}
+          @function hexToRgb($hex) {
+            $red: red($hex);
+            $green: green($hex);
+            $blue: blue($hex);
+            @return $red, $green, $blue;
+          }
         `}
       </style>
-      <h1 className={`text-2xl sm:text-3xl font-extrabold ${isDarkMode ? colors.primaryDark : colors.primaryLight} mb-4 text-center`}>
-        View Skins {selectedHero ? `for ${selectedHero}` : ""}
+      {progress.isVisible && (
+        <div className="progress-overlay">
+          <div className={`progress-container ${!progress.isVisible ? 'out' : ''}`}>
+            {progress.error ? (
+              <p className="error-text">{progress.error}</p>
+            ) : (
+              <>
+                <div className="progress-circle-container">
+                  <div className="progress-circle">
+                    <div className="progress-circle-inner">{progress.percentage}%</div>
+                  </div>
+                </div>
+                <p className="info-text">
+                  {progress.status === "Downloading..."
+                    ? "Mengunduh Skin..."
+                    : progress.status === "Extracting..."
+                    ? "Mengekstrak Skin..."
+                    : "Pemasangan Selesai"}
+                </p>
+                {progress.status !== "Completed" && (
+                  <p className="warning-text">
+                    <strong>Indonesia:</strong> Jangan close aplikasi sebelum script skin selesai dipasang.<br />
+                    <strong>Inggris:</strong> Do not close the app until the skin script is fully installed.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      <h1
+        className={`text-2xl sm:text-3xl font-extrabold ${
+          isDarkMode ? colors.primaryDark : colors.primaryLight
+        } mb-4 text-center`}
+      >
+        Lihat Skin {selectedHero ? `untuk ${selectedHero}` : ""}
       </h1>
+      {!selectedHero && !isLoading && !error && (
+        <p
+          className={`text-center text-sm ${
+            isDarkMode ? colors.primaryDark : colors.primaryLight
+          }`}
+        >
+          Silakan pilih hero untuk melihat skin.
+        </p>
+      )}
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Search by Skin Name..."
+          placeholder="Cari berdasarkan Nama Skin..."
           value={searchQuery}
           onChange={handleSearchChange}
-          className={`w-full bg-transparent border-2 ${colors.border} ${isDarkMode ? colors.primaryDark : colors.primaryLight} rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[${colors.glow}] outline-none transition-colors duration-200`}
+          className={`w-full bg-transparent border-2 ${colors.border} ${
+            isDarkMode ? colors.primaryDark : colors.primaryLight
+          } rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[${colors.glow}] outline-none transition-colors duration-200`}
+          disabled={!selectedHero || progress.isVisible}
         />
       </div>
       {error && (
@@ -162,81 +411,121 @@ const ViewSkin: React.FC = () => {
       )}
       {isLoading ? (
         <div className="flex justify-center">
-          <div className={`w-6 h-6 border-2 ${colors.border} rounded-full animate-spin`} />
+          <div
+            className={`w-6 h-6 border-2 ${colors.border} rounded-full animate-spin`}
+          />
         </div>
       ) : (
-        <div className="flex flex-col gap-2" ref={(el) => {
-          if (el) {
-            const items = el.querySelectorAll('.animate-fade-scroll');
-            const observer = new IntersectionObserver(
-              (entries) => {
-                entries.forEach((entry) => {
-                  if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    observer.unobserve(entry.target);
-                  }
-                });
-              },
-              { threshold: 0.2 }
-            );
-            items.forEach((item) => observer.observe(item));
-            return () => items.forEach((item) => observer.unobserve(item));
-          }
-        }}>
-          {filteredSkins.length === 0 && !error && (
-            <p className={`text-center text-sm ${isDarkMode ? colors.primaryDark : colors.primaryLight}`}>
-              No skins found{selectedHero ? ` for ${selectedHero}` : ""}.
+        <div
+          className="flex flex-col gap-2"
+          ref={(el) => {
+            if (el) {
+              const items = el.querySelectorAll(".animate-fade-scroll");
+              const observer = new IntersectionObserver(
+                (entries) => {
+                  entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                      entry.target.classList.add("visible");
+                      observer.unobserve(entry.target);
+                    }
+                  });
+                },
+                { threshold: 0.2 }
+              );
+              items.forEach((item) => observer.observe(item));
+              return () => items.forEach((item) => observer.unobserve(item));
+            }
+          }}
+        >
+          {filteredSkins.length === 0 && selectedHero && !error && (
+            <p
+              className={`text-center text-sm ${
+                isDarkMode ? colors.primaryDark : colors.primaryLight
+              }`}
+            >
+              Tidak ada skin ditemukan untuk {selectedHero}.
             </p>
           )}
           {filteredSkins.map((skin, index) => (
             <div
               key={skin.id}
-              className={`flex items-center justify-between bg-transparent border-2 ${colors.border} rounded-lg shadow-md p-2 transition-all duration-200 hover:scale-[1.02] animate-slide-in-right animate-delay-${index * 100} animate-fade-scroll`}
+              className={`flex items-center justify-between bg-transparent border-2 ${
+                colors.border
+              } rounded-lg shadow-md p-2 transition-all precedenteduration-200 hover:scale-[1.02] animate-slide-in-right animate-delay-${
+                index * 100
+              } animate-fade-scroll`}
             >
               <div className="flex items-center gap-2">
                 {!loadedImages.has(`${skin.id}-img1`) && (
                   <div className="w-9 h-9 flex items-center justify-center">
-                    <div className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`} />
+                    <div
+                      className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`}
+                    />
                   </div>
                 )}
                 <img
                   src={getImageUrl(skin.img1)}
                   alt={`${skin.name} img1`}
-                  className={`w-9 h-9 object-cover rounded-full border-2 ${colors.border} ${loadedImages.has(`${skin.id}-img1`) ? '' : 'hidden'}`}
+                  className={`w-9 h-9 object-cover rounded-full border-2 ${
+                    colors.border
+                  } ${loadedImages.has(`${skin.id}-img1`) ? "" : "hidden"}`}
                   loading="lazy"
                   decoding="async"
                 />
-                <FaAngleDoubleRight className={`text-base ${isDarkMode ? colors.primaryDark : colors.primaryLight}`} />
+                <FaAngleDoubleRight
+                  className={`text-base ${
+                    isDarkMode ? colors.primaryDark : colors.primaryLight
+                  }`}
+                />
                 {!loadedImages.has(`${skin.id}-img2`) && (
                   <div className="w-9 h-9 flex items-center justify-center">
-                    <div className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`} />
+                    <div
+                      className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`}
+                    />
                   </div>
                 )}
                 <img
                   src={getImageUrl(skin.img2)}
                   alt={`${skin.name} img2`}
-                  className={`w-9 h-9 object-cover rounded-full border-2 ${colors.border} ${loadedImages.has(`${skin.id}-img2`) ? '' : 'hidden'}`}
+                  className={`w-9 h-9 object-cover rounded-full border-2 ${
+                    colors.border
+                  } ${loadedImages.has(`${skin.id}-img2`) ? "" : "hidden"}`}
                   loading="lazy"
                   decoding="async"
                 />
-                <h2 className={`font-bold text-sm ${isDarkMode ? colors.primaryDark : colors.primaryLight} truncate max-w-[120px] sm:max-w-[200px]`}>
+                <h2
+                  className={`font-bold text-sm ${
+                    isDarkMode ? colors.primaryDark : colors.primaryLight
+                  } truncate max-w-[120px] sm:max-w[200px]`}
+                >
                   {skin.name}
                 </h2>
               </div>
-              <a
-                href={skin.url}
-                target="_blank"
-                rel="noreferrer"
-                className={`bg-transparent ${isDarkMode ? colors.primaryDark : colors.primaryLight} py-1 px-2 rounded-lg text-sm font-semibold border ${colors.border} hover:${isDarkMode ? colors.accentDark : colors.accentLight} transition-all duration-200`}
+              <button
+                onClick={() => handleInstallClick(skin.url)}
+                className={`bg-transparent ${
+                  isDarkMode ? colors.primaryDark : colors.primaryLight
+                } py-1 px-2 rounded-lg text-sm font-semibold border ${
+                  colors.border
+                } hover:${isDarkMode ? colors.accentDark : colors.accentLight} transition-all duration-200 disabled:opacity-50`}
+                disabled={progress.isVisible}
               >
                 Pasang
-              </a>
+              </button>
             </div>
           ))}
         </div>
       )}
     </div>
   );
+};
+
+// Helper function to convert hex to RGB
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)]
+    : [0, 0, 0];
 };
 
 export default ViewSkin;
