@@ -10,7 +10,7 @@ interface HeroData {
   URL: string;
 }
 
-const ViewHero: React.FC = () => {
+const ViewHero: React.FC = memo(() => {
   const { isDarkMode, theme } = useContext(ThemeContext);
   const { colors } = ThemeColors(theme, isDarkMode);
   const [heroes, setHeroes] = useState<HeroData[]>([]);
@@ -21,6 +21,7 @@ const ViewHero: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const roleOptions = ["Fighter", "Tank", "Mage", "Marksman", "Assassin", "Support"];
 
@@ -81,19 +82,23 @@ const ViewHero: React.FC = () => {
       timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
       timeoutRefs.current.clear();
       window.removeEventListener("storage", handleStorageChange);
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     };
   }, [fetchHeroes]);
 
   useEffect(() => {
-    const filtered = heroes
-      .filter((hero) => {
-        const matchesSearch = hero.her.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                             hero.roll.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesRole = roleFilter ? hero.roll === roleFilter : true;
-        return matchesSearch && matchesRole;
-      })
-      .sort((a, b) => a.her.localeCompare(b.her));
-    setFilteredHeroes(filtered);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      const filtered = heroes
+        .filter((hero) => {
+          const matchesSearch = hero.her.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                               hero.roll.toLowerCase().includes(searchQuery.toLowerCase());
+          const matchesRole = roleFilter ? hero.roll === roleFilter : true;
+          return matchesSearch && matchesRole;
+        })
+        .sort((a, b) => a.her.localeCompare(b.her));
+      setFilteredHeroes(filtered);
+    }, 300);
   }, [searchQuery, roleFilter, heroes]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,7 +128,7 @@ const ViewHero: React.FC = () => {
   }, []);
 
   return (
-    <div className="container mx-auto p-2 sm:p-3">
+    <div className="container mx-auto p-2 sm:p-3 relative">
       <style>
         {`
           @keyframes slide-in-right {
@@ -131,15 +136,17 @@ const ViewHero: React.FC = () => {
             100% { transform: translateX(0); opacity: 1; }
           }
           @keyframes fade-scroll {
-            0% { transform: translateY(30px); opacity: 0; }
+            0% { transform: translateY(20px); opacity: 0; }
             100% { transform: translateY(0); opacity: 1; }
           }
           .animate-slide-in-right {
-            animation: slide-in-right 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            animation: slide-in-right 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            will-change: transform, opacity;
           }
           .animate-fade-scroll {
-            animation: fade-scroll 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            animation: fade-scroll 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
             animation-play-state: paused;
+            will-change: transform, opacity;
           }
           .animate-fade-scroll.visible {
             animation-play-state: running;
@@ -246,6 +253,6 @@ const ViewHero: React.FC = () => {
       )}
     </div>
   );
-};
+});
 
-export default memo(ViewHero);
+export default ViewHero;
