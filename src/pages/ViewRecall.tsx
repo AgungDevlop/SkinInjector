@@ -18,6 +18,7 @@ interface ProgressState {
   percentage: number;
   status: string;
   error?: string;
+  itemType: string;
 }
 
 const ViewRecall: React.FC = () => {
@@ -33,41 +34,10 @@ const ViewRecall: React.FC = () => {
     isVisible: false,
     percentage: 0,
     status: "",
+    itemType: "Recall",
   });
   const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    (window as any).updateProgress = (data: {
-      percentage: number;
-      status: string;
-      error?: string;
-    }) => {
-      if (data.status === "Downloading..." || data.status === "Extracting..." || data.status === "Completed" || (data.status === "Error" && data.error)) {
-        setProgress({
-          isVisible: true,
-          percentage: Math.min(data.percentage, 100),
-          status: data.status,
-          error: data.error,
-        });
-      } else if (data.status === "Error" && !data.error) {
-        setProgress((prev) => ({ ...prev, isVisible: false }));
-      }
-    };
-
-    return () => {
-      delete (window as any).updateProgress;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (progress.status === "Completed") {
-      const timer = setTimeout(() => {
-        setProgress((prev) => ({ ...prev, isVisible: false }));
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [progress.status]);
 
   const getImageUrl = useCallback((url: string): string => {
     try {
@@ -81,34 +51,43 @@ const ViewRecall: React.FC = () => {
     }
   }, []);
 
-  const preloadImages = useCallback((data: RecallData[]) => {
-    timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
-    timeoutRefs.current.clear();
-    setLoadedImages(new Set());
+  const preloadImages = useCallback(
+    (data: RecallData[]) => {
+      timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
+      timeoutRefs.current.clear();
+      setLoadedImages(new Set());
 
-    data.forEach((recall) => {
-      const imgTypes: ("img1" | "img2")[] = ["img1", "img2"];
-      imgTypes.forEach((imgType) => {
-        const img = new Image();
-        const imgSrc = recall[imgType];
-        if (typeof imgSrc === "string") {
-          img.src = getImageUrl(imgSrc);
-          img.onload = () => {
-            setLoadedImages((prev) => new Set(prev).add(`${recall.id}-${imgType}`));
-            clearTimeout(timeoutRefs.current.get(`${recall.id}-${imgType}`));
-          };
-          img.onerror = () => {
-            setLoadedImages((prev) => new Set(prev).add(`${recall.id}-${imgType}`));
-            clearTimeout(timeoutRefs.current.get(`${recall.id}-${imgType}`));
-          };
-          const timeout = setTimeout(() => {
-            setLoadedImages((prev) => new Set(prev).add(`${recall.id}-${imgType}`));
-          }, 3000);
-          timeoutRefs.current.set(`${recall.id}-${imgType}`, timeout);
-        }
+      data.forEach((recall) => {
+        const imgTypes: ("img1" | "img2")[] = ["img1", "img2"];
+        imgTypes.forEach((imgType) => {
+          const img = new Image();
+          const imgSrc = recall[imgType];
+          if (typeof imgSrc === "string") {
+            img.src = getImageUrl(imgSrc);
+            img.onload = () => {
+              setLoadedImages((prev) =>
+                new Set(prev).add(`${recall.id}-${imgType}`)
+              );
+              clearTimeout(timeoutRefs.current.get(`${recall.id}-${imgType}`));
+            };
+            img.onerror = () => {
+              setLoadedImages((prev) =>
+                new Set(prev).add(`${recall.id}-${imgType}`)
+              );
+              clearTimeout(timeoutRefs.current.get(`${recall.id}-${imgType}`));
+            };
+            const timeout = setTimeout(() => {
+              setLoadedImages((prev) =>
+                new Set(prev).add(`${recall.id}-${imgType}`)
+              );
+            }, 3000);
+            timeoutRefs.current.set(`${recall.id}-${imgType}`, timeout);
+          }
+        });
       });
-    });
-  }, [getImageUrl]);
+    },
+    [getImageUrl]
+  );
 
   const fetchRecalls = useCallback(async () => {
     try {
@@ -126,7 +105,9 @@ const ViewRecall: React.FC = () => {
     } catch (err) {
       const errorMessage =
         err instanceof AxiosError
-          ? `${err.message}${err.response ? ` (Status: ${err.response.status})` : ''}`
+          ? `${err.message}${
+              err.response ? ` (Status: ${err.response.status})` : ""
+            }`
           : "Unknown error";
       setError(`Failed to fetch recalls: ${errorMessage}`);
     } finally {
@@ -167,23 +148,30 @@ const ViewRecall: React.FC = () => {
     };
   }, [recalls, searchQuery, preloadImages]);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  }, []);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+    },
+    []
+  );
 
-  const handleInstallClick = useCallback((url: string) => {
-    if ((window as any).Android) {
-      setProgress({ isVisible: false, percentage: 0, status: "" });
-      (window as any).Android.startDownload(url);
-    } else {
-      const message = `Antarmuka Android tidak tersedia. Silakan unduh file secara manual dari:\n${url}`;
-      alert(message);
-      window.open(url, "_blank");
-    }
-  }, []);
+  const handleInstallClick = useCallback(
+    (url: string) => {
+      if ((window as any).Android) {
+        setProgress({ isVisible: false, percentage: 0, status: "", itemType: "Recall" });
+        (window as any).Android.startDownload(url);
+      } else {
+        const message = `Antarmuka Android tidak tersedia. Silakan unduh file secara manual dari:\n${url}`;
+        alert(message);
+        window.open(url, "_blank");
+      }
+    },
+    []
+  );
 
   return (
     <div className="container mx-auto p-2 sm:p-4 relative">
+      <ProgressDialog progress={progress} setProgress={setProgress} />
       <style>
         {`
           @keyframes slide-in-right {
@@ -204,17 +192,22 @@ const ViewRecall: React.FC = () => {
           .animate-fade-scroll.visible {
             animation-play-state: running;
           }
-          ${filteredRecalls.map(
-            (_, i) => `
+          ${filteredRecalls
+            .map(
+              (_, i) => `
             .animate-delay-${i * 100} {
               animation-delay: ${i * 0.1}s;
             }
           `
-          ).join("")}
+            )
+            .join("")}
         `}
       </style>
-      <ProgressDialog progress={progress} type="Recall" />
-      <h1 className={`text-2xl sm:text-3xl font-extrabold ${isDarkMode ? colors.primaryDark : colors.primaryLight} mb-4 text-center`}>
+      <h1
+        className={`text-2xl sm:text-3xl font-extrabold ${
+          isDarkMode ? colors.primaryDark : colors.primaryLight
+        } mb-4 text-center`}
+      >
         View Recalls
       </h1>
       <div className="mb-4">
@@ -236,7 +229,9 @@ const ViewRecall: React.FC = () => {
       )}
       {isLoading ? (
         <div className="flex justify-center">
-          <div className={`w-6 h-6 border-2 ${colors.border} rounded-full animate-spin`} />
+          <div
+            className={`w-6 h-6 border-2 ${colors.border} rounded-full animate-spin`}
+          />
         </div>
       ) : (
         <div
@@ -261,7 +256,11 @@ const ViewRecall: React.FC = () => {
           }}
         >
           {filteredRecalls.length === 0 && !error && (
-            <p className={`text-center text-sm ${isDarkMode ? colors.primaryDark : colors.primaryLight}`}>
+            <p
+              className={`text-center text-sm ${
+                isDarkMode ? colors.primaryDark : colors.primaryLight
+              }`}
+            >
               No recalls found.
             </p>
           )}
@@ -277,7 +276,9 @@ const ViewRecall: React.FC = () => {
               <div className="flex items-center gap-2">
                 {!loadedImages.has(`${recall.id}-img1`) && (
                   <div className="w-9 h-9 flex items-center justify-center">
-                    <div className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`} />
+                    <div
+                      className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`}
+                    />
                   </div>
                 )}
                 <img
@@ -290,11 +291,15 @@ const ViewRecall: React.FC = () => {
                   decoding="async"
                 />
                 <FaAngleDoubleRight
-                  className={`text-base ${isDarkMode ? colors.primaryDark : colors.primaryLight}`}
+                  className={`text-base ${
+                    isDarkMode ? colors.primaryDark : colors.primaryLight
+                  }`}
                 />
                 {!loadedImages.has(`${recall.id}-img2`) && (
                   <div className="w-9 h-9 flex items-center justify-center">
-                    <div className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`} />
+                    <div
+                      className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`}
+                    />
                   </div>
                 )}
                 <img
@@ -320,7 +325,9 @@ const ViewRecall: React.FC = () => {
                   isDarkMode ? colors.primaryDark : colors.primaryLight
                 } py-1 px-2 rounded-lg text-sm font-semibold border ${
                   colors.border
-                } hover:${isDarkMode ? colors.accentDark : colors.accentLight} transition-all duration-200 disabled:opacity-50`}
+                } hover:${
+                  isDarkMode ? colors.accentDark : colors.accentLight
+                } transition-all duration-200 disabled:opacity-50`}
                 disabled={progress.isVisible}
               >
                 Pasang
