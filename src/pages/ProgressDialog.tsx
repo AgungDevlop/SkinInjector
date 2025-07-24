@@ -304,13 +304,14 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
           }
           .watermark {
             position: absolute;
-            top: 8px;
-            right: 8px;
+            top: 4px;
+            right: 4px;
             background: ${isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"};
             color: ${isDarkMode ? "#a0a0a0" : "#757575"};
             font-size: 12px;
-            padding: 4px 8px;
+            padding: 2px 6px;
             border-bottom-left-radius: 12px;
+            border-top-right-radius: 12px;
             opacity: 0.7;
             user-select: none;
           }
@@ -322,13 +323,13 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
           }
           .social-icon {
             font-size: 24px;
-            color: ${isDarkMode ? "#a0a0a0" : "#757575"};
+            color: ${colors.glow};
             transition: all 0.3s ease;
           }
           .social-icon:hover {
             color: ${colors.glow};
             transform: scale(1.2);
-            text-shadow: 0 0 8px rgba(${hexToRgb(colors.glow).join(", ")}, 0.6);
+            text-shadow: 0 0 8px rgba(${hexToRgb(colors.glow).join(", ")}, 0.8);
           }
         `}
       </style>
