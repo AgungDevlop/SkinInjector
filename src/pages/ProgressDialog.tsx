@@ -102,6 +102,7 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
                     {progress.itemType.toLowerCase()} script is fully installed.
                   </p>
                 )}
+                <div className="watermark">App By Agung Dev</div>
               </>
             )}
           </div>
@@ -162,10 +163,11 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
             width: 90%;
             max-width: 420px;
             text-align: center;
-            border: 2px solid ${colors.border};
+            border: 2px solid ${colors.glow}; /* Updated border to match progress bar */
             animation: fade-in 0.4s ease-out forwards;
             will-change: transform, opacity;
             transition: transform 0.3s ease, opacity 0.3s ease;
+            position: relative; /* Added to position watermark */
           }
           .progress-container.out {
             animation: fade-out 0.4s ease-out forwards;
@@ -242,6 +244,18 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
             margin-top: 16px;
             text-shadow: 0 0 6px rgba(255, 77, 77, 0.6);
             transition: color 0.3s ease;
+          }
+          .watermark {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: ${isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"};
+            color: ${isDarkMode ? "#a0a0a0" : "#757575"};
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            opacity: 0.7;
+            user-select: none;
           }
         `}
       </style>
