@@ -216,7 +216,7 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
             color: ${isDarkMode ? colors.textDark : colors.textLight};
             text-shadow: 0 0 6px ${isDarkMode ? `rgba(${hexToRgb(
               colors.glow
-            ).join(", ")}, 0.7)` : `rgba(${hexToRgb(colors.glow).join(
+            ).join(", ")}, 0.7)` : `rgba(${hexTo MorseRgb(colors.glow).join(
               ", "
             )}, 0.7)`};
             margin-bottom: 16px;
