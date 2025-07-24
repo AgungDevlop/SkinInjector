@@ -23,6 +23,7 @@ const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
     { value: 'lunargreen', label: 'Lunar Green' },
     { value: 'starred', label: 'Star Red' },
     { value: 'galacticgold', label: 'Galactic Gold' },
+    { value: 'quantumglow', label: 'Quantum Glow' },
   ];
 
   return (
@@ -35,44 +36,42 @@ const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
             background-repeat: no-repeat;
             background-position: right 6px center;
             background-size: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 6px ${colors.glow};
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 0 4px ${colors.glow};
             font-family: 'Inter', sans-serif;
             font-weight: 500;
-            letter-spacing: 0.02em;
           }
           .custom-select:hover, .custom-select:focus {
-            box-shadow: 0 0 10px ${colors.glow}, inset 0 0 3px ${colors.glow};
+            box-shadow: 0 0 8px ${colors.glow};
             outline: none;
             transform: scale(1.02);
           }
           .custom-select option {
             background: ${isDarkMode ? colors.dropdownBgDark : colors.dropdownBgLight};
             color: ${isDarkMode ? colors.dropdownTextDark : colors.dropdownTextLight};
-            font-family: 'Inter', sans-serif;
           }
           h1, button, select {
-            text-shadow: 0 0 3px ${colors.glow}80;
-            transition: text-shadow 0.3s ease;
+            text-shadow: 0 0 2px ${colors.glow}80;
+            transition: text-shadow 0.2s ease, transform 0.2s ease;
           }
           h1:hover, button:hover, select:hover {
-            text-shadow: 0 0 6px ${colors.glow};
+            text-shadow: 0 0 4px ${colors.glow};
           }
         `}
       </style>
       <ParticlesBackground />
-      <header className={`fixed top-0 left-0 w-full p-2 ${isDarkMode ? colors.headerDark : colors.headerLight} flex items-center justify-between z-50 backdrop-blur-lg shadow-md border-b-2 ${colors.border} sm:p-2.5`}>
+      <header className={`fixed top-0 left-0 w-full p-2 ${isDarkMode ? colors.headerDark : colors.headerLight} flex items-center justify-between z-50 backdrop-blur-md shadow-sm border-b-2 ${colors.border}`}>
         <div className="flex items-center group">
-          <FaGamepad className={`mr-1.5 text-lg ${isDarkMode ? colors.textDark : colors.textLight} border-2 ${colors.border} rounded-full p-0.5 group-hover:${isDarkMode ? colors.hoverDark : colors.hoverLight} transition-all duration-300`} />
-          <h1 className={`text-base font-bold tracking-tight ${isDarkMode ? colors.textDark : colors.textLight} group-hover:${isDarkMode ? colors.hoverDark : colors.hoverLight} transition-all duration-300 sm:text-lg`}>
+          <FaGamepad className={`mr-1.5 text-lg ${isDarkMode ? colors.textDark : colors.textLight} border-2 ${colors.border} rounded-full p-0.5 group-hover:${isDarkMode ? colors.hoverDark : colors.hoverLight} transition-transform duration-200`} />
+          <h1 className={`text-base font-bold tracking-tight ${isDarkMode ? colors.textDark : colors.textLight} group-hover:${isDarkMode ? colors.hoverDark : colors.hoverLight} transition-transform duration-200`}>
             Neon Visual App
           </h1>
         </div>
         <div className="flex items-center space-x-2">
           <select
             value={theme}
-            onChange={(e) => setTheme(e.target.value as 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal' | 'solarorange' | 'lunargreen' | 'starred' | 'galacticgold')}
-            className={`custom-select p-1.5 text-xs rounded-lg ${isDarkMode ? `${colors.dropdownBgDark} ${colors.dropdownTextDark}` : `${colors.dropdownBgLight} ${colors.dropdownTextLight}`} ${colors.dropdownBorder} focus:ring-0 outline-none transition-all duration-300 pr-6 sm:text-sm sm:p-2 sm:pr-7`}
+            onChange={(e) => setTheme(e.target.value as any)}
+            className={`custom-select p-1.5 text-xs rounded-lg ${isDarkMode ? `${colors.dropdownBgDark} ${colors.dropdownTextDark}` : `${colors.dropdownBgLight} ${colors.dropdownTextLight}`} ${colors.dropdownBorder} focus:ring-0 outline-none pr-6`}
           >
             {themeOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -82,30 +81,30 @@ const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
           </select>
           <button
             onClick={toggleDarkMode}
-            className={`p-1.5 rounded-full ${isDarkMode ? colors.buttonDark : colors.buttonLight} text-white hover:scale-105 transition-all duration-300 sm:p-2`}
+            className={`p-1.5 rounded-full ${isDarkMode ? colors.buttonDark : colors.buttonLight} text-white hover:scale-105 transition-transform duration-200`}
             aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {isDarkMode ? <FaSun className="text-sm" /> : <FaMoon className="text-sm" />}
           </button>
           <button
             onClick={() => (window.location.href = 'https://www.tiktok.com/@yourusername')}
-            className={`p-1.5 rounded-lg border ${colors.border} ${isDarkMode ? `${colors.textDark} ${colors.headerDark} ${colors.hoverDark}` : `${colors.textLight} ${colors.headerLight} ${colors.hoverLight}`} font-semibold hover:scale-105 transition-all duration-300 text-xs sm:p-2 sm:text-sm`}
+            className={`p-1.5 rounded-lg border ${colors.border} ${isDarkMode ? `${colors.textDark} ${colors.headerDark} ${colors.hoverDark}` : `${colors.textLight} ${colors.headerLight} ${colors.hoverLight}`} font-semibold hover:scale-105 transition-transform duration-200 text-xs`}
           >
             <FaTiktok className="text-sm" />
           </button>
         </div>
       </header>
-      <main className={`flex-1 ${isDarkMode ? 'text-white' : 'text-gray-900'} pt-12 pb-12 relative z-10 font-medium sm:pt-14 sm:pb-14`}>
+      <main className={`flex-1 ${isDarkMode ? 'text-white' : 'text-gray-900'} pt-12 pb-12 relative z-10 font-medium`}>
         {children}
       </main>
-      <footer className={`fixed bottom-0 left-0 w-full p-2 ${isDarkMode ? colors.headerDark : colors.headerLight} backdrop-blur-lg shadow-md border-t-2 ${colors.border} z-50 flex justify-around items-center sm:p-2.5`}>
-        <button onClick={handleBack} className={`${isDarkMode ? colors.textDark : colors.textLight} ${isDarkMode ? colors.hoverDark : colors.hoverLight} hover:scale-110 transition-all duration-300 text-base sm:text-lg`}>
+      <footer className={`fixed bottom-0 left-0 w-full p-2 ${isDarkMode ? colors.headerDark : colors.headerLight} backdrop-blur-md shadow-sm border-t-2 ${colors.border} z-50 flex justify-around items-center`}>
+        <button onClick={handleBack} className={`${isDarkMode ? colors.textDark : colors.textLight} ${isDarkMode ? colors.hoverDark : colors.hoverLight} hover:scale-110 transition-transform duration-200 text-base`}>
           <FaArrowLeft />
         </button>
-        <button onClick={handleHome} className={`${isDarkMode ? colors.textDark : colors.textLight} ${isDarkMode ? colors.hoverDark : colors.hoverLight} hover:scale-110 transition-all duration-300 text-base sm:text-lg`}>
+        <button onClick={handleHome} className={`${isDarkMode ? colors.textDark : colors.textLight} ${isDarkMode ? colors.hoverDark : colors.hoverLight} hover:scale-110 transition-transform duration-200 text-base`}>
           <FaHome />
         </button>
-        <button onClick={handleForward} className={`${isDarkMode ? colors.textDark : colors.textLight} ${isDarkMode ? colors.hoverDark : colors.hoverLight} hover:scale-110 transition-all duration-300 text-base sm:text-lg`}>
+        <button onClick={handleForward} className={`${isDarkMode ? colors.textDark : colors.textLight} ${isDarkMode ? colors.hoverDark : colors.hoverLight} hover:scale-110 transition-transform duration-200 text-base`}>
           <FaArrowRight />
         </button>
       </footer>
