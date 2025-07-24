@@ -72,7 +72,7 @@ const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
             value={theme}
             onChange={(e) => setTheme(e.target.value as any)}
             className={`custom-select p-1.5 text-xs rounded-lg ${isDarkMode ? `${colors.dropdownBgDark} ${colors.dropdownTextDark}` : `${colors.dropdownBgLight} ${colors.dropdownTextLight}`} ${colors.dropdownBorder} focus:ring-0 outline-none pr-6`}
-          >
+            >
             {themeOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -83,13 +83,13 @@ const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
             onClick={toggleDarkMode}
             className={`p-1.5 rounded-full ${isDarkMode ? colors.buttonDark : colors.buttonLight} text-white hover:scale-105 transition-transform duration-200`}
             aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
+            >
             {isDarkMode ? <FaSun className="text-sm" /> : <FaMoon className="text-sm" />}
           </button>
           <button
-            onClick={() => (window.location.href = 'https://www.tiktok.com/@yourusername')}
+            onClick={() => (window.location.href = 'https://www.tiktok.com/@agungdev')}
             className={`p-1.5 rounded-lg border ${colors.border} ${isDarkMode ? `${colors.textDark} ${colors.headerDark} ${colors.hoverDark}` : `${colors.textLight} ${colors.headerLight} ${colors.hoverLight}`} font-semibold hover:scale-105 transition-transform duration-200 text-xs`}
-          >
+            >
             <FaTiktok className="text-sm" />
           </button>
         </div>
