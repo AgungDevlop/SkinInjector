@@ -104,6 +104,18 @@ const Home: React.FC = memo(() => {
               .animate-fade-scroll.visible {
                 animation-play-state: running;
               }
+              .list-item {
+                border-bottom-left-radius: 12px;
+                border-top-right-radius: 12px;
+                border-top-left-radius: 0;
+                border-bottom-right-radius: 0;
+                border: 2px solid ${colors.border.replace('border-', '')};
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+              }
+              .list-item:hover {
+                box-shadow: 0 4px 12px rgba(${isDarkMode ? '255, 255, 255, 0.2' : '0, 0, 0, 0.3'});
+              }
               ${cards
                 .map(
                   (_, i) => `
@@ -121,13 +133,12 @@ const Home: React.FC = memo(() => {
                   transform: scale(1.05);
                 }
               }
-              /* Responsive adjustments for tablets and high-DPI devices */
               @media (min-width: 640px) {
                 .card-img {
-                  height: 6rem; /* Slightly larger images for tablets */
+                  height: 6rem;
                 }
                 .card-title {
-                  font-size: 1rem; /* Adjust font size */
+                  font-size: 1rem;
                 }
                 .card-button {
                   padding: 0.5rem 1rem;
@@ -136,7 +147,7 @@ const Home: React.FC = memo(() => {
               }
               @media (min-width: 768px) {
                 .card-img {
-                  height: 7rem; /* Larger images for larger tablets */
+                  height: 7rem;
                 }
                 .card-title {
                   font-size: 1.1rem;
@@ -148,7 +159,7 @@ const Home: React.FC = memo(() => {
               }
               @media (min-width: 1024px) {
                 .card-img {
-                  height: 8rem; /* Larger images for desktop */
+                  height: 8rem;
                 }
                 .card-title {
                   font-size: 1.2rem;
@@ -158,13 +169,12 @@ const Home: React.FC = memo(() => {
                   font-size: 1.1rem;
                 }
               }
-              /* High-DPI adjustments */
               @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
                 .card-img {
-                  image-rendering: crisp-edges; /* Ensure sharp images */
+                  image-rendering: crisp-edges;
                 }
                 .card-title {
-                  font-weight: 600; /* Slightly bolder for clarity */
+                  font-weight: 600;
                 }
               }
             `}
@@ -172,7 +182,7 @@ const Home: React.FC = memo(() => {
           {cards.map((card, index) => (
             <div
               key={card.title}
-              className={`bg-transparent border-2 ${colors.border} rounded-lg shadow-md overflow-hidden animate-fade-scroll animate-delay-${
+              className={`list-item bg-transparent border-2 ${colors.border} shadow-md overflow-hidden animate-fade-scroll animate-delay-${
                 index * 100
               } card-hover`}
             >
