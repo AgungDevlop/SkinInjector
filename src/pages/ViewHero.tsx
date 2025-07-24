@@ -156,10 +156,7 @@ const ViewHero: React.FC = memo(() => {
             border-top-right-radius: 12px;
             border-top-left-radius: 0;
             border-bottom-right-radius: 0;
-            border-left-width: 3px;
-            border-bottom-width: 3px;
-            border-right-width: 2px;
-            border-top-width: 2px;
+            border: 2px solid ${colors.border.replace('border-', '')};
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
           }
