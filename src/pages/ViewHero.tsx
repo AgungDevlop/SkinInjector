@@ -151,6 +151,21 @@ const ViewHero: React.FC = memo(() => {
           .animate-fade-scroll.visible {
             animation-play-state: running;
           }
+          .hero-item {
+            border-bottom-left-radius: 12px;
+            border-top-right-radius: 12px;
+            border-top-left-radius: 0;
+            border-bottom-right-radius: 0;
+            border-left-width: 3px;
+            border-bottom-width: 3px;
+            border-right-width: 2px;
+            border-top-width: 2px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          }
+          .hero-item:hover {
+            box-shadow: 0 4px 12px rgba(${isDarkMode ? '255, 255, 255, 0.2' : '0, 0, 0, 0.3'});
+          }
           ${filteredHeroes.map((_, i) => `
             .animate-delay-${i * 100} {
               animation-delay: ${i * 0.1}s;
@@ -220,7 +235,7 @@ const ViewHero: React.FC = memo(() => {
           {filteredHeroes.map((hero, index) => (
             <div
               key={hero.her}
-              className={`flex items-center justify-between bg-transparent border-2 ${colors.border} rounded-lg shadow-md p-3 transition-transform duration-200 hover:scale-[1.02] animate-slide-in-right animate-delay-${index * 100} animate-fade-scroll`}
+              className={`hero-item flex items-center justify-between bg-transparent border-2 ${colors.border} shadow-md p-3 animate-slide-in-right animate-delay-${index * 100} animate-fade-scroll`}
             >
               <div className="flex items-center gap-3">
                 {!loadedImages.has(hero.her) && (
