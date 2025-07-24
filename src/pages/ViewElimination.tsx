@@ -321,9 +321,9 @@ const ViewElimination: React.FC = () => {
                 <img
                   src={getImageUrl(elimination.img2)}
                   alt={`${elimination.name} img2`}
-                  className=`{w-9 h-9 object-cover rounded-full border-2 ${
-                    colors.border
-                  } ${loadedImages.has(`${elimination.id}-img2`) ? "" : "hidden"}`}
+                  className={`w-9 h-9 object-cover rounded-full border-2 ${colors.border} ${
+                    loadedImages.has(`${elimination.id}-img2`) ? "" : "hidden"
+                  }`}
                   loading="lazy"
                   decoding="async"
                 />
