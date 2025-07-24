@@ -7,16 +7,24 @@ interface ProgressState {
   percentage: number;
   status: string;
   error?: string;
+  type: string; // e.g., "Skin", "Spawn", "Recall", etc.
 }
 
 interface ProgressDialogProps {
   progress: ProgressState;
-  type: string; // e.g., "Skin", "Spawn", "Recall", etc.
 }
 
-const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, type }) => {
+const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress }) => {
   const { isDarkMode, theme } = useContext(ThemeContext);
   const { colors } = ThemeColors(theme, isDarkMode);
+
+  // Helper function to convert hex to RGB
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)]
+      : [0, 0, 0];
+  };
 
   if (!progress.isVisible) return null;
 
@@ -138,15 +146,15 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, type }) => {
             </div>
             <p className="info-text">
               {progress.status === "Downloading..."
-                ? `Mengunduh ${type}...`
+                ? `Mengunduh ${progress.type}...`
                 : progress.status === "Extracting..."
-                ? `Mengekstrak ${type}...`
+                ? `Mengekstrak ${progress.type}...`
                 : "Pemasangan Selesai"}
             </p>
             {progress.status !== "Completed" && (
               <p className="warning-text">
-                <strong>Indonesia:</strong> Jangan close aplikasi sebelum script {type.toLowerCase()} selesai dipasang.<br />
-                <strong>Inggris:</strong> Do not close the app until the {type.toLowerCase()} script is fully installed.
+                <strong>Indonesia:</strong> Jangan close aplikasi sebelum script {progress.type.toLowerCase()} selesai dipasang.<br />
+                <strong>Inggris:</strong> Do not close the app until the {progress.type.toLowerCase()} script is fully installed.
               </p>
             )}
           </>
@@ -154,14 +162,6 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, type }) => {
       </div>
     </div>
   );
-};
-
-// Helper function to convert hex to RGB
-const hexToRgb = (hex: string) => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)]
-    : [0, 0, 0];
 };
 
 export default ProgressDialog;
