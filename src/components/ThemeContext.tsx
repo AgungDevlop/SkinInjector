@@ -1,10 +1,10 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useState, useEffect, ReactNode } from 'react';
 
 interface ThemeContextType {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
-  theme: 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal' | 'solarorange' | 'lunargreen' | 'starred' | 'galacticgold';
-  setTheme: (theme: 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal' | 'solarorange' | 'lunargreen' | 'starred' | 'galacticgold') => void;
+  theme: 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal' | 'solarorange' | 'lunargreen' | 'starred' | 'galacticgold' | 'quantumglow';
+  setTheme: (theme: 'cyberpurple' | 'neonblue' | 'electricpink' | 'cosmicteal' | 'solarorange' | 'lunargreen' | 'starred' | 'galacticgold' | 'quantumglow') => void;
 }
 
 export const ThemeContext = createContext<ThemeContextType>({
@@ -24,6 +24,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     'lunargreen',
     'starred',
     'galacticgold',
+    'quantumglow',
   ];
 
   const getRandomTheme = (): ThemeContextType['theme'] => themes[Math.floor(Math.random() * themes.length)];
@@ -49,11 +50,17 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   });
 
   useEffect(() => {
-    try {
-      localStorage.setItem('theme', theme);
-    } catch {
-      console.warn('Failed to save theme to localStorage');
-    }
+    let timeoutId: NodeJS.Timeout;
+    const saveTheme = () => {
+      try {
+        localStorage.setItem('theme', theme);
+      } catch {
+        console.warn('Failed to save theme to localStorage');
+      }
+    };
+    // Debounce theme saving to prevent rapid writes
+    timeoutId = setTimeout(saveTheme, 100);
+    return () => clearTimeout(timeoutId);
   }, [theme]);
 
   useEffect(() => {
