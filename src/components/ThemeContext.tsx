@@ -58,7 +58,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         console.warn('Failed to save theme to localStorage');
       }
     };
-    // Debounce theme saving to prevent rapid writes
     timeoutId = setTimeout(saveTheme, 100);
     return () => clearTimeout(timeoutId);
   }, [theme]);
