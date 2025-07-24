@@ -7,7 +7,10 @@ import ProgressDialog from "./ProgressDialog";
 
 interface SkinData {
   id: string;
+  hero: string;
   name: string;
+  type: string;
+  role: string[];
   img1: string;
   img2: string;
   url: string;
@@ -27,8 +30,9 @@ const ViewSkin: React.FC = () => {
   const [skins, setSkins] = useState<SkinData[]>([]);
   const [filteredSkins, setFilteredSkins] = useState<SkinData[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [selectedHero, setSelectedHero] = useState<string | null>(null);
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [progress, setProgress] = useState<ProgressState>({
     isVisible: false,
@@ -38,6 +42,17 @@ const ViewSkin: React.FC = () => {
   });
   const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? [
+          parseInt(result[1], 16),
+          parseInt(result[2], 16),
+          parseInt(result[3], 16),
+        ]
+      : [0, 0, 0];
+  };
 
   const getImageUrl = useCallback((url: string): string => {
     try {
@@ -52,12 +67,12 @@ const ViewSkin: React.FC = () => {
   }, []);
 
   const preloadImages = useCallback(
-    (data: SkinData[]) => {
+    (skinsData: SkinData[]) => {
       timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
       timeoutRefs.current.clear();
       setLoadedImages(new Set());
 
-      data.forEach((skin) => {
+      skinsData.forEach((skin) => {
         const imgTypes: ("img1" | "img2")[] = ["img1", "img2"];
         imgTypes.forEach((imgType) => {
           const img = new Image();
@@ -89,34 +104,57 @@ const ViewSkin: React.FC = () => {
     [getImageUrl]
   );
 
-  const fetchSkins = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        "https://raw.githubusercontent.com/AgungDevlop/InjectorMl/main/Skin.json",
-        { timeout: 5000 }
-      );
-      const skinsData = response.data;
-      if (!Array.isArray(skinsData)) {
-        throw new Error("Skin.json is not a valid array");
+  const fetchSkins = useCallback(
+    async (hero: string | null) => {
+      if (!hero) {
+        setSkins([]);
+        setFilteredSkins([]);
+        setIsLoading(false);
+        return;
       }
-      setSkins(skinsData);
-      setFilteredSkins(skinsData);
-      preloadImages(skinsData);
-    } catch (err) {
-      const errorMessage =
-        err instanceof AxiosError
-          ? `${err.message}${
-              err.response ? ` (Status: ${err.response.status})` : ""
-            }`
-          : "Unknown error";
-      setError(`Failed to fetch skins: ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [preloadImages]);
+
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const response = await axios.get(
+          "https://raw.githubusercontent.com/AgungDevlop/InjectorMl/main/Skin.json",
+          { timeout: 5000 }
+        );
+        const skinsData = response.data;
+        if (!Array.isArray(skinsData)) {
+          throw new Error("Skin.json is not a valid array");
+        }
+
+        const filteredSkinsData = skinsData
+          .filter((skin: SkinData) => skin.hero === hero)
+          .sort((a: SkinData, b: SkinData) => a.name.localeCompare(b.name));
+
+        setSkins(filteredSkinsData);
+        setFilteredSkins(filteredSkinsData);
+        preloadImages(filteredSkinsData);
+      } catch (err) {
+        const errorMessage =
+          err instanceof AxiosError
+            ? `${err.message}${
+                err.response ? ` (Status: ${err.response.status})` : ""
+              }`
+            : "Unknown error";
+        setError(`Gagal mengambil skin: ${errorMessage}`);
+        setSkins([]);
+        setFilteredSkins([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [preloadImages]
+  );
 
   useEffect(() => {
-    fetchSkins();
+    const hero = sessionStorage.getItem("selectedHero");
+    setSelectedHero(hero);
+    fetchSkins(hero);
+
     return () => {
       timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
       timeoutRefs.current.clear();
@@ -208,18 +246,27 @@ const ViewSkin: React.FC = () => {
           isDarkMode ? colors.primaryDark : colors.primaryLight
         } mb-4 text-center`}
       >
-        View Skins
+        Lihat Skin {selectedHero ? `untuk ${selectedHero}` : ""}
       </h1>
+      {!selectedHero && !isLoading && !error && (
+        <p
+          className={`text-center text-sm ${
+            isDarkMode ? colors.primaryDark : colors.primaryLight
+          }`}
+        >
+          Silakan pilih hero untuk melihat skin.
+        </p>
+      )}
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Search by Skin Name..."
+          placeholder="Cari berdasarkan Nama Skin..."
           value={searchQuery}
           onChange={handleSearchChange}
           className={`w-full bg-transparent border-2 ${colors.border} ${
             isDarkMode ? colors.primaryDark : colors.primaryLight
           } rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[${colors.glow}] outline-none transition-colors duration-200`}
-          disabled={progress.isVisible}
+          disabled={!selectedHero || progress.isVisible}
         />
       </div>
       {error && (
@@ -255,13 +302,13 @@ const ViewSkin: React.FC = () => {
             }
           }}
         >
-          {filteredSkins.length === 0 && !error && (
+          {filteredSkins.length === 0 && selectedHero && !error && (
             <p
               className={`text-center text-sm ${
                 isDarkMode ? colors.primaryDark : colors.primaryLight
               }`}
             >
-              No skins found.
+              Tidak ada skin ditemukan untuk {selectedHero}.
             </p>
           )}
           {filteredSkins.map((skin, index) => (
