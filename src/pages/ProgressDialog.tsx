@@ -7,7 +7,7 @@ interface ProgressState {
   percentage: number;
   status: string;
   error?: string;
-  type: string; // e.g., "Skin", "Spawn", "Recall", etc.
+  type: string;
 }
 
 interface ProgressDialogProps {
@@ -18,7 +18,6 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress }) => {
   const { isDarkMode, theme } = useContext(ThemeContext);
   const { colors } = ThemeColors(theme, isDarkMode);
 
-  // Helper function to convert hex to RGB
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
