@@ -18,6 +18,7 @@ interface ProgressState {
   percentage: number;
   status: string;
   error?: string;
+  type: string;
 }
 
 const ViewSpawn: React.FC = () => {
@@ -33,6 +34,7 @@ const ViewSpawn: React.FC = () => {
     isVisible: false,
     percentage: 0,
     status: "",
+    type: "Spawn",
   });
   const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -49,6 +51,7 @@ const ViewSpawn: React.FC = () => {
           percentage: Math.min(data.percentage, 100),
           status: data.status,
           error: data.error,
+          type: "Spawn",
         });
       } else if (data.status === "Error" && !data.error) {
         setProgress((prev) => ({ ...prev, isVisible: false }));
@@ -173,7 +176,7 @@ const ViewSpawn: React.FC = () => {
 
   const handleInstallClick = useCallback((url: string) => {
     if ((window as any).Android) {
-      setProgress({ isVisible: false, percentage: 0, status: "" });
+      setProgress({ isVisible: false, percentage: 0, status: "", type: "Spawn" });
       (window as any).Android.startDownload(url);
     } else {
       const message = `Antarmuka Android tidak tersedia. Silakan unduh file secara manual dari:\n${url}`;
@@ -213,7 +216,7 @@ const ViewSpawn: React.FC = () => {
           ).join("")}
         `}
       </style>
-      <ProgressDialog progress={progress} type="Spawn" />
+      <ProgressDialog progress={progress} />
       <h1 className={`text-2xl sm:text-3xl font-extrabold ${isDarkMode ? colors.primaryDark : colors.primaryLight} mb-4 text-center`}>
         View Spawns
       </h1>
