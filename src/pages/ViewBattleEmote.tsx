@@ -186,13 +186,27 @@ const ViewBattleEmote: React.FC = () => {
           }
           .animate-slide-in-right {
             animation: slide-in-right 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            will-change: transform, opacity;
           }
           .animate-fade-scroll {
             animation: fade-scroll 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
             animation-play-state: paused;
+            will-change: transform, opacity;
           }
           .animate-fade-scroll.visible {
             animation-play-state: running;
+          }
+          .list-item {
+            border-bottom-left-radius: 12px;
+            border-top-right-radius: 12px;
+            border-top-left-radius: 0;
+            border-bottom-right-radius: 0;
+            border: 2px solid ${colors.border.replace('border-', '')};
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          }
+          .list-item:hover {
+            box-shadow: 0 4px 12px rgba(${isDarkMode ? '255, 255, 255, 0.2' : '0, 0, 0, 0.3'});
           }
           ${filteredBattleEmotes
             .map(
@@ -269,9 +283,9 @@ const ViewBattleEmote: React.FC = () => {
           {filteredBattleEmotes.map((battleEmote, index) => (
             <div
               key={battleEmote.id}
-              className={`flex items-center justify-between bg-transparent border-2 ${
+              className={`list-item flex items-center justify-between bg-transparent border-2 ${
                 colors.border
-              } rounded-lg shadow-md p-2 transition-all duration-200 hover:scale-[1.02] animate-slide-in-right animate-delay-${
+              } shadow-md p-2 animate-slide-in-right animate-delay-${
                 index * 100
               } animate-fade-scroll`}
             >
@@ -288,9 +302,7 @@ const ViewBattleEmote: React.FC = () => {
                   alt={`${battleEmote.name} img1`}
                   className={`w-9 h-9 object-cover rounded-full border-2 ${
                     colors.border
-                  } ${
-                    loadedImages.has(`${battleEmote.id}-img1`) ? "" : "hidden"
-                  }`}
+                  } ${loadedImages.has(`${battleEmote.id}-img1`) ? "" : "hidden"}`}
                   loading="lazy"
                   decoding="async"
                 />
@@ -311,9 +323,7 @@ const ViewBattleEmote: React.FC = () => {
                   alt={`${battleEmote.name} img2`}
                   className={`w-9 h-9 object-cover rounded-full border-2 ${
                     colors.border
-                  } ${
-                    loadedImages.has(`${battleEmote.id}-img2`) ? "" : "hidden"
-                  }`}
+                  } ${loadedImages.has(`${battleEmote.id}-img2`) ? "" : "hidden"}`}
                   loading="lazy"
                   decoding="async"
                 />
