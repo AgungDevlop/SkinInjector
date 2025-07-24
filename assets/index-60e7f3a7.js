@@ -299,13 +299,14 @@ Error generating stack: `+s.message+`
           }
           .watermark {
             position: absolute;
-            top: 8px;
-            right: 8px;
+            top: 4px;
+            right: 4px;
             background: ${n?"rgba(255, 255, 255, 0.1)":"rgba(0, 0, 0, 0.1)"};
             color: ${n?"#a0a0a0":"#757575"};
             font-size: 12px;
-            padding: 4px 8px;
+            padding: 2px 6px;
             border-bottom-left-radius: 12px;
+            border-top-right-radius: 12px;
             opacity: 0.7;
             user-select: none;
           }
@@ -317,13 +318,13 @@ Error generating stack: `+s.message+`
           }
           .social-icon {
             font-size: 24px;
-            color: ${n?"#a0a0a0":"#757575"};
+            color: ${i.glow};
             transition: all 0.3s ease;
           }
           .social-icon:hover {
             color: ${i.glow};
             transform: scale(1.2);
-            text-shadow: 0 0 8px rgba(${s(i.glow).join(", ")}, 0.6);
+            text-shadow: 0 0 8px rgba(${s(i.glow).join(", ")}, 0.8);
           }
         `})]})},f_=()=>{const{isDarkMode:t,theme:e}=x.useContext(tn),{colors:n}=yn(e,t),[r,i]=x.useState([]),[s,o]=x.useState([]),[a,l]=x.useState(""),[u,f]=x.useState(!1),[c,h]=x.useState(""),[p,y]=x.useState(null),[v,E]=x.useState(new Set),[g,m]=x.useState({isVisible:!1,percentage:0,status:"",itemType:"Skin"}),b=x.useRef(new Map),S=x.useRef(null),N=x.useCallback(C=>{try{const P=C.replace(/\\+/g,"");return P.includes("static.wikia.nocookie.net")?P.split("/revision/latest")[0]:P}catch{return"https://via.placeholder.com/40?text=Skin"}},[]),L=x.useCallback(C=>{b.current.forEach(P=>clearTimeout(P)),b.current.clear(),E(new Set),C.forEach(P=>{["img1","img2"].forEach(D=>{const O=new Image,I=P[D];if(typeof I=="string"){O.src=N(I),O.onload=()=>{E(ee=>new Set(ee).add(`${P.id}-${D}`)),clearTimeout(b.current.get(`${P.id}-${D}`))},O.onerror=()=>{E(ee=>new Set(ee).add(`${P.id}-${D}`)),clearTimeout(b.current.get(`${P.id}-${D}`))};const B=setTimeout(()=>{E(ee=>new Set(ee).add(`${P.id}-${D}`))},3e3);b.current.set(`${P.id}-${D}`,B)}})})},[N]),_=x.useCallback(async C=>{if(!C){i([]),o([]),f(!1);return}f(!0),h("");try{const T=(await he.get("https://raw.githubusercontent.com/AgungDevlop/InjectorMl/main/Skin.json",{timeout:5e3})).data;if(!Array.isArray(T))throw new Error("Skin.json is not a valid array");const D=T.filter(O=>O.hero===C).sort((O,I)=>O.name.localeCompare(I.name));i(D),o(D),L(D)}catch(P){const T=P instanceof Fe?`${P.message}${P.response?` (Status: ${P.response.status})`:""}`:"Unknown error";h(`Gagal mengambil skin: ${T}`),i([]),o([])}finally{f(!1)}},[L]);x.useEffect(()=>{const C=sessionStorage.getItem("selectedHero");return y(C),_(C),()=>{b.current.forEach(P=>clearTimeout(P)),b.current.clear(),S.current&&clearTimeout(S.current)}},[_]),x.useEffect(()=>(S.current&&clearTimeout(S.current),S.current=setTimeout(()=>{const C=r.filter(P=>P.name.toLowerCase().includes(a.toLowerCase())).sort((P,T)=>P.name.localeCompare(T.name));o(C),L(C)},300),()=>{S.current&&clearTimeout(S.current)}),[r,a,L]);const w=x.useCallback(C=>{l(C.target.value)},[]),k=x.useCallback(C=>{if(window.Android)m({isVisible:!1,percentage:0,status:"",itemType:"Skin"}),window.Android.startDownload(C);else{const P=`Antarmuka Android tidak tersedia. Silakan unduh file secara manual dari:
 ${C}`;alert(P),window.open(C,"_blank")}},[]);return d.jsxs("div",{className:"container mx-auto p-2 sm:p-4 relative",children:[d.jsx(Gs,{progress:g,setProgress:m}),d.jsx("style",{children:`
