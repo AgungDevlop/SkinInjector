@@ -97,7 +97,7 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
                     <FaYoutube />
                   </a>
                   <a
-                    href="https://www.instagram.com/agungdev"
+                    href="https://www.instagram.com/@agungdev"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="social-icon"
@@ -149,7 +149,7 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
                     <FaYoutube />
                   </a>
                   <a
-                    href="https://www.instagram.com/agungdev"
+                    href="https://www.instagram.com/@agungdev"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="social-icon"
@@ -310,27 +310,33 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
             color: ${isDarkMode ? "#a0a0a0" : "#757575"};
             font-size: 12px;
             padding: 2px 6px;
-            border-bottom-left-radius: 12px;
-            border-top-right-radius: 12px;
+            border-bottom-left-radius: 20px;
+            border-top-right-radius: 20px;
             opacity: 0.7;
             user-select: none;
           }
           .social-icons {
             display: flex;
             justify-content: center;
-            gap: 16px;
+            gap: 24px;
             margin-top: 16px;
           }
           .social-icon {
             font-size: 24px;
             color: ${colors.glow};
+            border: 2px solid ${colors.glow};
+            border-bottom-left-radius: 12px;
+            border-top-right-radius: 12px;
+            padding: 6px;
             transition: all 0.3s ease;
           }
           .social-icon:hover {
             color: ${colors.glow};
             transform: scale(1.2);
             text-shadow: 0 0 8px rgba(${hexToRgb(colors.glow).join(", ")}, 0.8);
+            border-color: ${colors.glow};
           }
+
         `}
       </style>
     </>
