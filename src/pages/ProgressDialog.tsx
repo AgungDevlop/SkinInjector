@@ -81,7 +81,7 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
                 <p className="error-text">{progress.error}</p>
                 <div className="social-icons">
                   <a
-                    href="https://www.tiktok.com/@agungdev"
+                    href="https://tiktok.com/@neoninject"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="social-icon"
@@ -89,7 +89,7 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
                     <FaTiktok />
                   </a>
                   <a
-                    href="https://www.youtube.com/@agungdev"
+                    href="https://youtube.com/@neoninjectofficial?si=AH5n0TtstVo3AMzD"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="social-icon"
@@ -97,7 +97,7 @@ const ProgressDialog: React.FC<ProgressDialogProps> = ({ progress, setProgress }
                     <FaYoutube />
                   </a>
                   <a
-                    href="https://www.instagram.com/@agungdev"
+                    href="https://www.instagram.com/agungeka_22?igsh=dmo4YnR4dTF3cnhq"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="social-icon"
