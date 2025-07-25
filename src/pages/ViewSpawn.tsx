@@ -202,9 +202,31 @@ const ViewSpawn: React.FC = () => {
             border: 2px solid ${colors.border.replace('border-', '')};
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 0;
           }
           .list-item:hover {
             box-shadow: 0 4px 12px rgba(${isDarkMode ? '255, 255, 255, 0.2' : '0, 0, 0, 0.3'});
+          }
+          .list-item-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+          }
+          .list-item-text {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+          }
+          .list-item-button {
+            flex-shrink: 0;
+            min-width: 80px;
+            text-align: center;
           }
           ${filteredSpawns
             .map(
@@ -281,15 +303,15 @@ const ViewSpawn: React.FC = () => {
           {filteredSpawns.map((spawn, index) => (
             <div
               key={spawn.id}
-              className={`list-item flex items-center justify-between bg-transparent border-2 ${
+              className={`list-item bg-transparent border-2 ${
                 colors.border
               } shadow-md p-2 animate-slide-in-right animate-delay-${
                 index * 100
               } animate-fade-scroll`}
             >
-              <div className="flex items-center gap-2">
+              <div className="list-item-content">
                 {!loadedImages.has(`${spawn.id}-img1`) && (
-                  <div className="w-9 h-9 flex items-center justify-center">
+                  <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
                     <div
                       className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`}
                     />
@@ -300,17 +322,17 @@ const ViewSpawn: React.FC = () => {
                   alt={`${spawn.name} img1`}
                   className={`w-9 h-9 object-cover rounded-full border-2 ${
                     colors.border
-                  } ${loadedImages.has(`${spawn.id}-img1`) ? "" : "hidden"}`}
+                  } ${loadedImages.has(`${spawn.id}-img1`) ? "" : "hidden"} flex-shrink-0`}
                   loading="lazy"
                   decoding="async"
                 />
                 <FaAngleDoubleRight
                   className={`text-base ${
                     isDarkMode ? colors.primaryDark : colors.primaryLight
-                  }`}
+                  } flex-shrink-0`}
                 />
                 {!loadedImages.has(`${spawn.id}-img2`) && (
-                  <div className="w-9 h-9 flex items-center justify-center">
+                  <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
                     <div
                       className={`w-5 h-5 border-2 ${colors.border} rounded-full animate-spin`}
                     />
@@ -321,14 +343,14 @@ const ViewSpawn: React.FC = () => {
                   alt={`${spawn.name} img2`}
                   className={`w-9 h-9 object-cover rounded-full border-2 ${
                     colors.border
-                  } ${loadedImages.has(`${spawn.id}-img2`) ? "" : "hidden"}`}
+                  } ${loadedImages.has(`${spawn.id}-img2`) ? "" : "hidden"} flex-shrink-0`}
                   loading="lazy"
                   decoding="async"
                 />
                 <h2
                   className={`font-bold text-sm ${
                     isDarkMode ? colors.primaryDark : colors.primaryLight
-                  } truncate max-w-[120px] sm:max-w-[200px]`}
+                  } truncate list-item-text`}
                 >
                   {spawn.name}
                 </h2>
@@ -341,7 +363,7 @@ const ViewSpawn: React.FC = () => {
                   colors.border
                 } hover:${
                   isDarkMode ? colors.accentDark : colors.accentLight
-                } transition-all duration-200 disabled:opacity-50`}
+                } transition-all duration-200 disabled:opacity-50 list-item-button`}
                 disabled={progress.isVisible}
               >
                 Pasang
